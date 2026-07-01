@@ -76,8 +76,10 @@ npm install despia-native
 ```
 
 **npm:** https://www.npmjs.com/package/despia-native  
-**Despia docs:** https://docs.despia.com  
-**Despia website:** https://despia.com
+**Despia setup docs:** https://setup.despia.com  
+**Despia website:** https://despia.com  
+**Despia MCP server** (for AI agents / Cursor / Copilot): https://setup.despia.com/mcp  
+**Despia llms.txt** (full docs index for LLMs): https://setup.despia.com/llms.txt
 
 The `despia-native` package exposes the `despia()` bridge function that communicates with the native Despia wrapper. It is a **no-op when running in a regular browser** — completely safe to import unconditionally in your code without breaking web builds.
 
