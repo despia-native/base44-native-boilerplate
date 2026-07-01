@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Completing sign in...</title>
+  <style>
+    body { margin: 0; display: flex; align-items: center; justify-content: center;
+           min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+           background: #fff; color: #888; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <p>Completing sign in...</p>
+  <script>
+    (function () {
+      var params       = new URLSearchParams(window.location.search)
+      var scheme       = params.get('deeplink_scheme')
+      if (!scheme) { console.error('no deeplink_scheme'); return; }
+
+      var hash         = new URLSearchParams(window.location.hash.substring(1))
+      var accessToken  = hash.get('access_token')
+      var refreshToken = hash.get('refresh_token') || ''
+      var error        = hash.get('error') || params.get('error')
+
+      if (!accessToken) {
+        window.location.href = scheme + '://oauth/auth?error=' + encodeURIComponent(error || 'no_access_token')
+        return
+      }
+
+      window.location.href =
+        scheme + '://oauth/auth' +
+        '?access_token='  + encodeURIComponent(accessToken) +
+        '&refresh_token=' + encodeURIComponent(refreshToken)
+    })()
+  </script>
+</body>
+</html>
