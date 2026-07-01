@@ -36,8 +36,18 @@
                           : ('error=' + encodeURIComponent(error || 'no_token'));
 
       if (isNative && scheme) {
-        // Deep-link back into the native app; the app opens /auth with the token.
-        window.location.href = scheme + '://auth?' + payload;
+        // Deep-link back into the native app so the OS reopens it on /auth with the token.
+        var deeplink = scheme + '://auth?' + payload;
+        // In a WebView an <a> click reliably fires the OS deep-link handler,
+        // where window.location assignment is often swallowed.
+        var a = document.createElement('a');
+        a.href = deeplink;
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        // Fallbacks in case the click is blocked.
+        setTimeout(function () { window.location.href = deeplink; }, 150);
+        setTimeout(function () { window.location = deeplink; }, 400);
       } else {
         // Web: forward straight to the in-app /auth handler via the hash.
         window.location.replace('/auth#' + payload);
