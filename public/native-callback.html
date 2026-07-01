@@ -5,57 +5,87 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Completing sign in...</title>
   <style>
-    body { margin: 0; display: flex; align-items: center; justify-content: center;
-      min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-      background: #fff; color: #888; font-size: 14px; padding: 16px; text-align: center; }
-    #debug { margin-top: 16px; font-family: monospace; font-size: 11px; word-break: break-all; color: #aaa; }
+    body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #fff; color: #333;
+      font-size: 14px; padding: 20px; }
+    .card { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 12px; }
+    h1 { font-size: 16px; margin: 0; }
+    label { font-size: 11px; font-weight: 600; color: #111; }
+    textarea { width: 100%; box-sizing: border-box; border: 1px solid #ddd; border-radius: 8px;
+      background: #f6f6f6; padding: 8px; font-family: monospace; font-size: 11px; line-height: 1.5;
+      color: #444; resize: none; word-break: break-all; }
+    button { border: none; border-radius: 8px; padding: 10px 16px; font-size: 13px; font-weight: 600;
+      cursor: pointer; }
+    .primary { background: #111; color: #fff; }
+    .secondary { background: #fff; color: #444; border: 1px solid #ddd; }
+    .info { border: 1px solid #ddd; border-radius: 8px; background: #f6f6f6; padding: 10px;
+      font-family: monospace; font-size: 11px; line-height: 1.6; color: #666; word-break: break-all; }
+    .info b { color: #111; }
   </style>
 </head>
 <body>
-  <div>
-    <p id="msg">Completing sign in...</p>
-    <div id="debug"></div>
+  <div class="card">
+    <h1>Native callback — debug</h1>
+
+    <label>Current URL (copy this):</label>
+    <textarea id="url" readonly rows="5"></textarea>
+    <button class="primary" id="copyBtn">Copy URL</button>
+
+    <div class="info" id="info"></div>
+
+    <button class="primary" id="continueBtn">Continue sign in</button>
+    <button class="secondary" id="cancelBtn">Cancel</button>
   </div>
+
   <script>
     (function () {
-      // Google (implicit flow) returns the token in the URL HASH:
-      //   #access_token=ya29...&state=myapp
-      // But some environments deliver it in the query string. Read BOTH.
-      var hash   = new URLSearchParams(window.location.hash.substring(1));
-      var query  = new URLSearchParams(window.location.search);
-
+      var hash  = new URLSearchParams(window.location.hash.substring(1));
+      var query = new URLSearchParams(window.location.search);
       function pick(key) { return hash.get(key) || query.get(key); }
 
-      // deeplink_scheme travels via `state`
       var scheme      = pick('state') || pick('deeplink_scheme');
       var accessToken = pick('access_token');
       var error       = pick('error');
 
-      // Show what actually arrived, in case something is still off
-      document.getElementById('debug').innerText =
-        'scheme=' + (scheme || 'none') +
-        ' | token=' + (accessToken ? 'yes' : 'no') +
-        ' | error=' + (error || 'none');
+      // Show the full URL so it can be copied out of the WebView
+      document.getElementById('url').value = window.location.href;
 
-      if (!scheme) {
-        document.getElementById('msg').innerText = 'Error: missing deeplink scheme';
-        return;
-      }
+      document.getElementById('info').innerHTML =
+        '<b>scheme:</b> ' + (scheme || 'none') + '<br>' +
+        '<b>token:</b> ' + (accessToken ? 'yes' : 'no') + '<br>' +
+        '<b>error:</b> ' + (error || 'none');
 
-      if (error) {
-        window.location.href = scheme + '://oauth/auth?error=' + encodeURIComponent(error);
-        return;
-      }
+      document.getElementById('copyBtn').addEventListener('click', function () {
+        var el = document.getElementById('url');
+        el.focus(); el.select();
+        var btn = document.getElementById('copyBtn');
+        navigator.clipboard.writeText(el.value).then(function () {
+          btn.innerText = 'Copied!';
+          setTimeout(function () { btn.innerText = 'Copy URL'; }, 2000);
+        }).catch(function () {
+          document.execCommand('copy');
+          btn.innerText = 'Copied!';
+          setTimeout(function () { btn.innerText = 'Copy URL'; }, 2000);
+        });
+      });
 
-      if (!accessToken) {
-        document.getElementById('msg').innerText = 'Error: no access token received';
-        window.location.href = scheme + '://oauth/auth?error=' + encodeURIComponent('no_access_token');
-        return;
-      }
+      // Manual redirect — only fires when the user taps the button
+      document.getElementById('continueBtn').addEventListener('click', function () {
+        if (!scheme) { alert('Missing deeplink scheme — cannot continue'); return; }
+        if (error) {
+          window.location.href = scheme + '://oauth/auth?error=' + encodeURIComponent(error);
+          return;
+        }
+        if (!accessToken) {
+          window.location.href = scheme + '://oauth/auth?error=' + encodeURIComponent('no_access_token');
+          return;
+        }
+        window.location.href = scheme + '://oauth/auth?access_token=' + encodeURIComponent(accessToken);
+      });
 
-      // Fire the deeplink — Despia intercepts and routes the WebView to
-      //   /auth?access_token=ya29...
-      window.location.href = scheme + '://oauth/auth?access_token=' + encodeURIComponent(accessToken);
+      document.getElementById('cancelBtn').addEventListener('click', function () {
+        if (scheme) window.location.href = scheme + '://oauth/auth?error=cancelled';
+      });
     })();
   </script>
 </body>
