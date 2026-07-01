@@ -20,11 +20,17 @@ export default function Auth() {
   }
 
   useEffect(() => {
-    // Deeplinks can land the token in EITHER the query string or the hash.
+    // Deeplinks can land the token in the query string, the hash, OR — because
+    // Despia strips the deeplink query — in localStorage (set by native-callback.html).
     const hash        = new URLSearchParams(window.location.hash.substring(1))
-    const googleToken = searchParams.get('access_token') || hash.get('access_token')
+    const storedToken = (() => { try { return localStorage.getItem('despia_google_token') } catch { return null } })()
+    const storedError = (() => { try { return localStorage.getItem('despia_oauth_error') } catch { return null } })()
+    const googleToken = searchParams.get('access_token') || hash.get('access_token') || storedToken
     const base44Token = searchParams.get('token')        || hash.get('token')
-    const error       = searchParams.get('error')        || hash.get('error')
+    const error       = searchParams.get('error')        || hash.get('error')        || storedError
+
+    // Consume the stored values so a stale token can't loop us
+    try { localStorage.removeItem('despia_google_token'); localStorage.removeItem('despia_oauth_error') } catch (e) {}
 
     // Capture the full incoming URL so we can see what the native app actually delivered
     const info = {

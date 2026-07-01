@@ -69,17 +69,22 @@
         });
       });
 
-      // Manual redirect — only fires when the user taps the button
+      // Manual redirect — only fires when the user taps the button.
+      // Despia strips the deeplink query string, so we stash the token in
+      // localStorage first; /auth reads it from there.
       document.getElementById('continueBtn').addEventListener('click', function () {
         if (!scheme) { alert('Missing deeplink scheme — cannot continue'); return; }
         if (error) {
+          try { localStorage.setItem('despia_oauth_error', error); } catch (e) {}
           window.location.href = scheme + '://oauth/auth?error=' + encodeURIComponent(error);
           return;
         }
         if (!accessToken) {
+          try { localStorage.setItem('despia_oauth_error', 'no_access_token'); } catch (e) {}
           window.location.href = scheme + '://oauth/auth?error=' + encodeURIComponent('no_access_token');
           return;
         }
+        try { localStorage.setItem('despia_google_token', accessToken); } catch (e) {}
         window.location.href = scheme + '://oauth/auth?access_token=' + encodeURIComponent(accessToken);
       });
 
