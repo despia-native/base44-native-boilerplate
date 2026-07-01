@@ -7,6 +7,17 @@ export default function Auth() {
   const navigate = useNavigate()
   const [status, setStatus] = useState('Signing you in...')
   const [debug, setDebug] = useState(null)
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      setCopied(false)
+    }
+  }
 
   useEffect(() => {
     // Deeplinks can land the token in EITHER the query string or the hash.
@@ -65,13 +76,29 @@ export default function Auth() {
         <p className="text-sm text-muted-foreground text-center">{status}</p>
 
         {debug && (
-          <div className="w-full mt-4 rounded-lg border border-border bg-muted/40 p-3 text-[11px] leading-relaxed text-muted-foreground break-all font-mono">
-            <div><span className="text-foreground">URL:</span> {debug.fullUrl}</div>
-            <div><span className="text-foreground">search:</span> {debug.search || '(empty)'}</div>
-            <div><span className="text-foreground">hash:</span> {debug.hash || '(empty)'}</div>
-            <div><span className="text-foreground">google token:</span> {debug.hasGoogleToken ? 'yes' : 'no'}</div>
-            <div><span className="text-foreground">base44 token:</span> {debug.hasBase44Token ? 'yes' : 'no'}</div>
-            {debug.error && <div><span className="text-foreground">error:</span> {debug.error}</div>}
+          <div className="w-full mt-4 flex flex-col gap-2">
+            <label className="text-[11px] font-medium text-foreground">Current URL (copy this):</label>
+            <textarea
+              readOnly
+              value={debug.fullUrl}
+              onFocus={(e) => e.target.select()}
+              rows={4}
+              className="w-full rounded-lg border border-border bg-muted/40 p-2 text-[11px] leading-relaxed text-muted-foreground break-all font-mono resize-none"
+            />
+            <button
+              onClick={handleCopy}
+              className="w-full rounded-lg bg-primary text-primary-foreground text-xs font-medium px-4 py-2"
+            >
+              {copied ? 'Copied!' : 'Copy URL'}
+            </button>
+
+            <div className="rounded-lg border border-border bg-muted/40 p-3 text-[11px] leading-relaxed text-muted-foreground break-all font-mono">
+              <div><span className="text-foreground">search:</span> {debug.search || '(empty)'}</div>
+              <div><span className="text-foreground">hash:</span> {debug.hash || '(empty)'}</div>
+              <div><span className="text-foreground">google token:</span> {debug.hasGoogleToken ? 'yes' : 'no'}</div>
+              <div><span className="text-foreground">base44 token:</span> {debug.hasBase44Token ? 'yes' : 'no'}</div>
+              {debug.error && <div><span className="text-foreground">error:</span> {debug.error}</div>}
+            </div>
           </div>
         )}
 
