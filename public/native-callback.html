@@ -58,9 +58,11 @@
 
       var payload = token ? ('access_token=' + encodeURIComponent(token))
                           : ('error=' + encodeURIComponent(error || 'no_token'));
-      // Token goes in the HASH (#), not the query (?): during SPA path fallback a server
-      // may drop the query string but never the hash, so the token survives to the app.
-      var deeplink = scheme + '://oauth/auth#' + payload;
+      // Deep-link to the ROOT path with the token in the HASH. The SPA host always serves
+      // "/", so it never rewrites us to /login before React boots; main.jsx then reads the
+      // hash token and routes to /auth. (Path-based deep links get rewritten to / by the
+      // static host, which triggers the auth guard → /login before the token is seen.)
+      var deeplink = scheme + '://#' + payload;
 
       document.getElementById('deeplink').value = deeplink;
       document.getElementById('currenturl').value = window.location.href;
