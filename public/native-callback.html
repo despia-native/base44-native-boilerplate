@@ -27,9 +27,12 @@
   <div class="card">
     <h1>Native callback — debug</h1>
 
-    <label>Current URL (copy this):</label>
-    <textarea id="url" readonly rows="5"></textarea>
-    <button class="primary" id="copyBtn">Copy URL</button>
+    <label>Incoming URL (from Google):</label>
+    <textarea id="url" readonly rows="4"></textarea>
+
+    <label>Deeplink we will fire:</label>
+    <textarea id="deeplink" readonly rows="4"></textarea>
+    <button class="primary" id="copyBtn">Copy deeplink</button>
 
     <div class="info" id="info"></div>
 
@@ -47,45 +50,44 @@
       var accessToken = pick('access_token');
       var error       = pick('error');
 
-      // Show the full URL so it can be copied out of the WebView
+      // Build the deeplink exactly like the working `?foo=bar` test:
+      // scheme://oauth/auth?token=<raw google token>
+      var deeplink = '';
+      if (scheme) {
+        if (error) {
+          deeplink = scheme + '://oauth/auth?error=' + encodeURIComponent(error);
+        } else if (accessToken) {
+          deeplink = scheme + '://oauth/auth?token=' + encodeURIComponent(accessToken);
+        } else {
+          deeplink = scheme + '://oauth/auth?error=no_access_token';
+        }
+      }
+
       document.getElementById('url').value = window.location.href;
+      document.getElementById('deeplink').value = deeplink || '(no scheme — cannot build)';
 
       document.getElementById('info').innerHTML =
         '<b>scheme:</b> ' + (scheme || 'none') + '<br>' +
-        '<b>token:</b> ' + (accessToken ? 'yes' : 'no') + '<br>' +
+        '<b>token:</b> ' + (accessToken ? 'yes (' + accessToken.length + ' chars)' : 'no') + '<br>' +
         '<b>error:</b> ' + (error || 'none');
 
-      document.getElementById('copyBtn').addEventListener('click', function () {
-        var el = document.getElementById('url');
-        el.focus(); el.select();
-        var btn = document.getElementById('copyBtn');
-        navigator.clipboard.writeText(el.value).then(function () {
+      function copy(text, btn, label) {
+        navigator.clipboard.writeText(text).then(function () {
           btn.innerText = 'Copied!';
-          setTimeout(function () { btn.innerText = 'Copy URL'; }, 2000);
+          setTimeout(function () { btn.innerText = label; }, 2000);
         }).catch(function () {
-          document.execCommand('copy');
-          btn.innerText = 'Copied!';
-          setTimeout(function () { btn.innerText = 'Copy URL'; }, 2000);
+          btn.innerText = 'Copy failed';
+          setTimeout(function () { btn.innerText = label; }, 2000);
         });
+      }
+
+      document.getElementById('copyBtn').addEventListener('click', function () {
+        copy(deeplink, this, 'Copy deeplink');
       });
 
-      // Manual redirect — only fires when the user taps the button.
-      // Despia strips the deeplink query string, so we stash the token in
-      // localStorage first; /auth reads it from there.
       document.getElementById('continueBtn').addEventListener('click', function () {
         if (!scheme) { alert('Missing deeplink scheme — cannot continue'); return; }
-        if (error) {
-          try { localStorage.setItem('despia_oauth_error', error); } catch (e) {}
-          window.location.href = scheme + '://oauth/auth?error=' + encodeURIComponent(error);
-          return;
-        }
-        if (!accessToken) {
-          try { localStorage.setItem('despia_oauth_error', 'no_access_token'); } catch (e) {}
-          window.location.href = scheme + '://oauth/auth?error=' + encodeURIComponent('no_access_token');
-          return;
-        }
-        try { localStorage.setItem('despia_google_token', accessToken); } catch (e) {}
-        window.location.href = scheme + '://oauth/auth?access_token=' + encodeURIComponent(accessToken);
+        window.location.href = deeplink;
       });
 
       document.getElementById('cancelBtn').addEventListener('click', function () {
