@@ -2,17 +2,14 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import * as customAuth from '@/lib/customAuth'
 import { useAuth } from '@/lib/AuthContext'
+import { readFromUrl, consumePendingToken } from '@/lib/deeplinkToken'
 
-// Pull the Google access token from anywhere it might live in the URL
-// (query string OR hash — the deeplink/redirect can use either).
+// The token may have been stashed at boot (captured from the deep-link before
+// React mounted) OR still be sitting in the live URL. Check both.
 function extractFromUrl() {
-  const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''))
-  const query = new URLSearchParams(window.location.search)
-  const token =
-    query.get('token') || query.get('access_token') ||
-    hash.get('token') || hash.get('access_token')
-  const error = query.get('error') || hash.get('error')
-  return { token, error }
+  const stashed = consumePendingToken()
+  if (stashed.token || stashed.error) return stashed
+  return readFromUrl()
 }
 
 export default function Auth() {
