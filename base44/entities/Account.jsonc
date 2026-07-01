@@ -1,0 +1,48 @@
+{
+  "name": "Account",
+  "type": "object",
+  "properties": {
+    "email": {
+      "type": "string",
+      "description": "Lowercased, trimmed email \u2014 unique identity for the account"
+    },
+    "full_name": {
+      "type": "string",
+      "description": "Display name"
+    },
+    "password_hash": {
+      "type": "string",
+      "description": "PBKDF2 hash in the form salt:derivedKey (hex). Empty for Google-only accounts."
+    },
+    "google_id": {
+      "type": "string",
+      "description": "Google 'sub' identifier when the account is linked to Google"
+    },
+    "avatar_url": {
+      "type": "string",
+      "description": "Profile picture URL (from Google or set later)"
+    },
+    "email_verified": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the email has been verified"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "user",
+        "admin"
+      ],
+      "default": "user",
+      "description": "Application role for the account"
+    },
+    "last_login_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of the most recent successful login"
+    }
+  },
+  "required": [
+    "email"
+  ]
+}

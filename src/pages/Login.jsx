@@ -1,31 +1,51 @@
+import { useState } from 'react'
 import despia from 'despia-native'
 import { base44 } from '@/api/base44Client'
-
-// ✏️ Replace with your Base44 app's public URL if it changes
-const APP_BASE_URL = 'https://despia-connect-go.base44.app'
-
-// TODO: Replace with your own Google OAuth Client ID
-const GOOGLE_CLIENT_ID = '754083834914-u87c6nne95at2igropqii1k6iumv929p.apps.googleusercontent.com'
+import * as customAuth from '@/lib/customAuth'
 
 const isDespia = navigator.userAgent.toLowerCase().includes('despia')
 
 export default function Login() {
+  const [mode, setMode] = useState('login') // 'login' | 'register'
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [fullName, setFullName] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+
   const handleGoogleSignIn = async () => {
+    setError('')
+    // Both web and native get a Google access token, then exchange it for our own JWT on /auth.
+    const res = await base44.functions.invoke('googleAuthUrl', { deeplink_scheme: 'myapp' })
+    const { url } = res.data
     if (isDespia) {
-      // Native: get OAuth URL from Base44 backend and open via despia oauth:// bridge
-      const res = await base44.functions.invoke('googleAuthUrl', { deeplink_scheme: 'myapp' });
-      const { url } = res.data;
       despia(`oauth://?url=${encodeURIComponent(url)}`)
     } else {
-      // Web: standard OAuth redirect
-      base44.auth.loginWithProvider('google', APP_BASE_URL + '/auth')
+      window.location.href = url
+    }
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+    try {
+      if (mode === 'register') {
+        await customAuth.register({ email, password, full_name: fullName })
+      } else {
+        await customAuth.login({ email, password })
+      }
+      window.location.href = '/'
+    } catch (err) {
+      const msg = err?.response?.data?.error || err?.message || 'Something went wrong'
+      setError(msg)
+      setLoading(false)
     }
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm flex flex-col items-center gap-8">
-        {/* Logo / App name */}
         <div className="flex flex-col items-center gap-2">
           <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center shadow-lg">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -34,11 +54,58 @@ export default function Login() {
               <path d="M2 12l10 5 10-5"/>
             </svg>
           </div>
-          <h1 className="text-2xl font-bold font-heading text-foreground">Welcome</h1>
-          <p className="text-sm text-muted-foreground text-center">Sign in to continue</p>
+          <h1 className="text-2xl font-bold font-heading text-foreground">
+            {mode === 'register' ? 'Create account' : 'Welcome'}
+          </h1>
+          <p className="text-sm text-muted-foreground text-center">
+            {mode === 'register' ? 'Sign up to get started' : 'Sign in to continue'}
+          </p>
         </div>
 
-        {/* Google Sign In Button */}
+        <form onSubmit={handleSubmit} className="w-full flex flex-col gap-3">
+          {mode === 'register' && (
+            <input
+              type="text"
+              placeholder="Full name"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
+            />
+          )}
+          <input
+            type="email"
+            required
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
+          />
+          <input
+            type="password"
+            required
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
+          />
+
+          {error && <p className="text-xs text-destructive">{error}</p>}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full rounded-lg bg-primary text-primary-foreground px-4 py-3 text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+          >
+            {loading ? 'Please wait...' : mode === 'register' ? 'Create account' : 'Sign in'}
+          </button>
+        </form>
+
+        <div className="w-full flex items-center gap-3">
+          <div className="flex-1 h-px bg-border" />
+          <span className="text-xs text-muted-foreground">or</span>
+          <div className="flex-1 h-px bg-border" />
+        </div>
+
         <button
           onClick={handleGoogleSignIn}
           className="w-full flex items-center justify-center gap-3 border border-border rounded-lg px-4 py-3 bg-background hover:bg-muted transition-colors text-sm font-medium text-foreground shadow-sm"
@@ -49,12 +116,16 @@ export default function Login() {
             <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
             <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
           </svg>
-          Sign in with Google
+          Continue with Google
         </button>
 
-        <p className="text-xs text-muted-foreground text-center">
-          By signing in, you agree to our terms of service
-        </p>
+        <button
+          type="button"
+          onClick={() => { setMode(mode === 'register' ? 'login' : 'register'); setError('') }}
+          className="text-xs text-muted-foreground"
+        >
+          {mode === 'register' ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
+        </button>
       </div>
     </div>
   )
