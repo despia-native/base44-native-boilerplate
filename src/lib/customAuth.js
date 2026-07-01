@@ -42,6 +42,16 @@ export async function loginWithGoogleToken(google_token) {
   return data.account;
 }
 
+// Request a password reset email. Always resolves (backend hides whether the email exists).
+export async function requestPasswordReset(email) {
+  await invoke('authRequestReset', { email, app_url: window.location.origin });
+}
+
+// Reset the password using the token from the emailed link.
+export async function resetPassword({ reset_token, new_password }) {
+  await invoke('authResetPassword', { reset_token, new_password });
+}
+
 // Verify the stored token and return the current account, or null.
 export async function fetchMe() {
   const token = getToken();

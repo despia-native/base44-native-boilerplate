@@ -8,6 +8,8 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import ScrollToTop from './components/ScrollToTop';
 import Login from '@/pages/Login';
 import Auth from '@/pages/Auth';
+import ForgotPassword from '@/pages/ForgotPassword';
+import ResetPassword from '@/pages/ResetPassword';
 import Home from '@/pages/Home';
 
 function App() {
@@ -19,6 +21,8 @@ function App() {
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
               <Route path="/" element={<Home />} />
             </Route>

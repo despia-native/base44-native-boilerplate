@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import despia from 'despia-native'
 import { base44 } from '@/api/base44Client'
 import * as customAuth from '@/lib/customAuth'
@@ -90,6 +91,12 @@ export default function Login() {
           />
 
           {error && <p className="text-xs text-destructive">{error}</p>}
+
+          {mode === 'login' && (
+            <Link to="/forgot-password" className="text-xs text-muted-foreground self-end -mt-1">
+              Forgot password?
+            </Link>
+          )}
 
           <button
             type="submit"
