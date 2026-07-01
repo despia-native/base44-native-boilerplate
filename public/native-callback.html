@@ -52,6 +52,7 @@
 
       // Build the deeplink exactly like the working `?foo=bar` test:
       // scheme://oauth/auth?token=<raw google token>
+      // NO localStorage — the token rides on the deeplink query itself.
       var deeplink = '';
       if (scheme) {
         if (error) {
