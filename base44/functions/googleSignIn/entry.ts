@@ -68,13 +68,16 @@ Deno.serve(async (req) => {
     let user = users?.[0];
 
     // ── Step 3: If user doesn't exist, create them ────────────────────────────
-    // inviteUser registers the email in Base44's user system without sending an invite email
-    // in the context of a service-role backend call.
+    // NOTE: base44.users.inviteUser requires an authenticated ADMIN caller — but this
+    // function IS the login step, so there is no logged-in user yet. That call fails
+    // with "you must be logged in to invite users". Instead we provision the user
+    // directly with the service role, which needs no logged-in caller.
     if (!user) {
-      await base44.users.inviteUser(googleEmail, 'user');
-      // Re-fetch to get the newly created user record with their ID
-      const newUsers = await base44.asServiceRole.entities.User.filter({ email: googleEmail });
-      user = newUsers?.[0];
+      user = await base44.asServiceRole.entities.User.create({
+        email: googleEmail,
+        full_name: tokenInfo.name || googleEmail.split('@')[0],
+        role: 'user'
+      });
     }
 
     if (!user) {
