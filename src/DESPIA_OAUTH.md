@@ -97,6 +97,38 @@ Register `https://YOUR-APP.base44.app/native-callback.html` in Google Cloud Cons
 
 ---
 
+## ⚠️ Deeplink Quirks (learned the hard way)
+
+These are the two things that cost the most debugging time. Read them before touching the callback.
+
+### 1. Despia DOES pass deeplink query params through — use them
+
+Firing `myapp://oauth/auth?foo=bar` results in the WebView loading
+`https://YOUR-APP.base44.app/auth?foo=bar` — the query string survives intact.
+So **the token must ride on the deeplink query**: `native-callback.html` fires
+`scheme://oauth/auth?provider=google&token=<google token>` and `/auth` reads it
+from `searchParams`. This is the correct, working approach.
+
+If the token seems "not to arrive", the bug is in how the callback **builds** that
+deeplink URL — not in Despia. Verify by firing a known-clean deeplink like
+`?foo=bar` and confirming it lands in the WebView URL.
+
+### 2. localStorage does NOT cross the boundary — never use it for hand-off
+
+`native-callback.html` runs inside Despia's **in-app browser / web auth session**.
+`/auth` runs inside the **WKWebView** (the main app). These are two separate storage
+contexts — a value written to `localStorage` in the callback is **not readable** in
+`/auth`. Any "stash token in localStorage, read it on the other side" approach will
+silently fail. Always pass the token on the deeplink query (quirk #1).
+
+### 3. Always send `provider` alongside the token
+
+The token is just an opaque string — `/auth` can't tell a Google token from any other.
+The callback appends `&provider=google` so `/auth` knows which exchange to run
+(`googleSignIn`). Add more providers the same way (`provider=apple`, etc.).
+
+---
+
 ## Setup Checklist
 
 ### Step 1 — Google Cloud Console
@@ -147,6 +179,11 @@ const APP_BASE_URL = 'https://YOUR-APP.base44.app'  // ✏️ change this
 
 > Must be in `public/` — static asset, outside React Router. Google redirects here after sign-in.
 
+> This version fires `scheme://oauth/auth?provider=google&token=<token>` — the token
+> rides on the deeplink **query** (quirk #1), tagged with `provider` (quirk #3). It also
+> shows the exact deeplink in a copyable box so you can verify the token is present on a
+> real device before continuing. NO localStorage (quirk #2).
+
 ```html
 <!DOCTYPE html>
 <html lang="en">
@@ -155,35 +192,88 @@ const APP_BASE_URL = 'https://YOUR-APP.base44.app'  // ✏️ change this
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Completing sign in...</title>
   <style>
-    body { margin: 0; display: flex; align-items: center; justify-content: center;
-      min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-      background: #fff; color: #888; font-size: 14px; }
+    body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #fff; color: #333;
+      font-size: 14px; padding: 20px; }
+    .card { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 12px; }
+    h1 { font-size: 16px; margin: 0; }
+    label { font-size: 11px; font-weight: 600; color: #111; }
+    textarea { width: 100%; box-sizing: border-box; border: 1px solid #ddd; border-radius: 8px;
+      background: #f6f6f6; padding: 8px; font-family: monospace; font-size: 11px; line-height: 1.5;
+      color: #444; resize: none; word-break: break-all; }
+    button { border: none; border-radius: 8px; padding: 10px 16px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .primary { background: #111; color: #fff; }
+    .secondary { background: #fff; color: #444; border: 1px solid #ddd; }
+    .info { border: 1px solid #ddd; border-radius: 8px; background: #f6f6f6; padding: 10px;
+      font-family: monospace; font-size: 11px; line-height: 1.6; color: #666; word-break: break-all; }
+    .info b { color: #111; }
   </style>
 </head>
 <body>
-  <p>Completing sign in...</p>
+  <div class="card">
+    <h1>Native callback — debug</h1>
+    <label>Incoming URL (from Google):</label>
+    <textarea id="url" readonly rows="4"></textarea>
+    <label>Deeplink we will fire:</label>
+    <textarea id="deeplink" readonly rows="4"></textarea>
+    <button class="primary" id="copyBtn">Copy deeplink</button>
+    <div class="info" id="info"></div>
+    <button class="primary" id="continueBtn">Continue sign in</button>
+    <button class="secondary" id="cancelBtn">Cancel</button>
+  </div>
   <script>
     (function () {
-      var params      = new URLSearchParams(window.location.search)
-      var hash        = new URLSearchParams(window.location.hash.substring(1))
+      var hash  = new URLSearchParams(window.location.hash.substring(1));
+      var query = new URLSearchParams(window.location.search);
+      function pick(key) { return hash.get(key) || query.get(key); }
+
       // deeplink_scheme travels via OAuth `state` — Google returns it in the hash
-      var scheme      = hash.get('state') || params.get('state') || params.get('deeplink_scheme')
-      if (!scheme) { document.body.innerText = 'Error: missing deeplink scheme'; return }
+      var scheme      = pick('state') || pick('deeplink_scheme');
+      var accessToken = pick('access_token');
+      var error       = pick('error');
 
-      var accessToken = hash.get('access_token')
-      var error       = hash.get('error') || params.get('error')
-
-      if (!accessToken) {
-        window.location.href = scheme + '://oauth/auth?error=' + encodeURIComponent(error || 'no_access_token')
-        return
+      // Build the deeplink — token rides the query, tagged with provider. NO localStorage.
+      var deeplink = '';
+      if (scheme) {
+        if (error) {
+          deeplink = scheme + '://oauth/auth?error=' + encodeURIComponent(error);
+        } else if (accessToken) {
+          deeplink = scheme + '://oauth/auth?provider=google&token=' + encodeURIComponent(accessToken);
+        } else {
+          deeplink = scheme + '://oauth/auth?error=no_access_token';
+        }
       }
-      // Fire deeplink — Despia intercepts and routes WebView to /auth?access_token=...
-      window.location.href = scheme + '://oauth/auth?access_token=' + encodeURIComponent(accessToken)
-    })()
+
+      document.getElementById('url').value = window.location.href;
+      document.getElementById('deeplink').value = deeplink || '(no scheme — cannot build)';
+      document.getElementById('info').innerHTML =
+        '<b>scheme:</b> ' + (scheme || 'none') + '<br>' +
+        '<b>token:</b> ' + (accessToken ? 'yes (' + accessToken.length + ' chars)' : 'no') + '<br>' +
+        '<b>error:</b> ' + (error || 'none');
+
+      function copy(text, btn, label) {
+        navigator.clipboard.writeText(text).then(function () {
+          btn.innerText = 'Copied!'; setTimeout(function () { btn.innerText = label; }, 2000);
+        }).catch(function () {
+          btn.innerText = 'Copy failed'; setTimeout(function () { btn.innerText = label; }, 2000);
+        });
+      }
+      document.getElementById('copyBtn').addEventListener('click', function () { copy(deeplink, this, 'Copy deeplink'); });
+      document.getElementById('continueBtn').addEventListener('click', function () {
+        if (!scheme) { alert('Missing deeplink scheme — cannot continue'); return; }
+        window.location.href = deeplink;
+      });
+      document.getElementById('cancelBtn').addEventListener('click', function () {
+        if (scheme) window.location.href = scheme + '://oauth/auth?error=cancelled';
+      });
+    })();
   </script>
 </body>
 </html>
 ```
+
+> **Production tip:** once verified, you can drop the debug UI and auto-fire the deeplink
+> (`window.location.href = deeplink`) immediately instead of waiting for a button tap.
 
 ---
 
@@ -341,8 +431,9 @@ export default function Login() {
 
 ### `src/pages/Auth.jsx`
 
-> Two flows. Native: Google token → `googleSignIn` backend → Base44 JWT → `setToken`.  
-> Web: Base44 issues its own token via redirect → arrives in hash → `setToken`.
+> Native flow: reads `provider` + `token` from the deeplink query, sends the Google
+> token to `googleSignIn`, sets the returned Base44 JWT. `provider` tells it which
+> exchange to run (quirk #3). Web flow: Base44 issues its own token via redirect.
 
 ```jsx
 import { useEffect } from 'react'
@@ -354,9 +445,14 @@ export default function Auth() {
   const navigate = useNavigate()
 
   useEffect(() => {
+    // native-callback.html fires: scheme://oauth/auth?provider=google&token=<google token>
+    // Despia passes the query straight through to the WebView (see quirk #1).
     const hash        = new URLSearchParams(window.location.hash.substring(1))
-    const googleToken = searchParams.get('access_token') || hash.get('access_token')
-    const base44Token = searchParams.get('token')        || hash.get('token')
+    const provider    = searchParams.get('provider')     || hash.get('provider')
+    const token       = searchParams.get('token')        || searchParams.get('access_token') || hash.get('access_token')
+    // Only treat the token as a Google token when provider says so.
+    const googleToken = provider === 'google' ? token : (provider ? null : token)
+    const base44Token = searchParams.get('base44_token') || hash.get('base44_token')
     const error       = searchParams.get('error')        || hash.get('error')
 
     if (error) { console.error('Auth error:', error); navigate('/login'); return }
@@ -371,13 +467,14 @@ export default function Auth() {
     if (googleToken) {
       // Native flow:
       //   1. Send Google token to backend
-      //   2. Backend verifies with Google API
+      //   2. Backend verifies with Google's tokeninfo API
       //   3. Backend finds/creates user by email
       //   4. Backend issues real Base44 JWT via sso.getAccessToken
       //   5. We setToken with the Base44 JWT — done
       base44.functions.invoke('googleSignIn', { google_token: googleToken })
         .then((res) => {
           const { access_token } = res.data
+          if (!access_token) throw new Error('No access_token returned from server')
           base44.auth.setToken(access_token)
           window.location.href = '/'
         })
@@ -452,6 +549,8 @@ export default App
 | `googleSignIn` returns 401 | Google token invalid/expired | Token expired in transit — try again; check clock skew |
 | `native-callback.html` 404 | Wrong folder | Must be `public/native-callback.html` |
 | Deeplink not intercepted | Scheme not registered | Add scheme + `oauth/auth` in Despia project settings |
+| Token "never arrives" at `/auth` | Used localStorage to hand off the token | localStorage does NOT cross the in-app-browser → WebView boundary (quirk #2). Put the token on the deeplink query: `?provider=google&token=...` |
+| Token arrives but `/auth` ignores it | Missing `provider` param | Callback must append `&provider=google` so `/auth` runs the right exchange (quirk #3) |
 | `GOOGLE_CLIENT_ID secret not set` | Missing secret | Add in Base44 → Settings → Environment Variables |
 | Works on web, not Despia | UA check failing | Log `navigator.userAgent` on device — must contain "despia" |
 | User appears logged out after redirect | Using `navigate()` instead of `window.location.href` | Must use hard redirect to force auth re-init |
