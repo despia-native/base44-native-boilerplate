@@ -21,37 +21,32 @@
   <div class="spinner"></div>
   <script>
     (function () {
-      // Google returns the token in the URL hash (response_type=token) and our
-      // deeplink scheme in `state`. Grab both from hash and query.
+      // This page is ONLY ever reached in the native flow — Google opens it inside a
+      // Safari/in-app browser session (not the Despia WebView), so UA detection is
+      // useless here. Web users never land here; they go straight to /auth.
+      // Therefore: ALWAYS deep-link back into the native app.
       var hash = new URLSearchParams(window.location.hash.substring(1));
       var query = new URLSearchParams(window.location.search);
 
       var token = hash.get('access_token') || query.get('access_token');
       var error = hash.get('error') || query.get('error');
-      var scheme = hash.get('state') || query.get('state'); // e.g. "myapp"
-
-      var isNative = navigator.userAgent.toLowerCase().indexOf('despia') !== -1;
+      var scheme = hash.get('state') || query.get('state'); // deeplink scheme, e.g. "myapp"
 
       var payload = token ? ('access_token=' + encodeURIComponent(token))
                           : ('error=' + encodeURIComponent(error || 'no_token'));
 
-      if (isNative && scheme) {
-        // Deep-link back into the native app so the OS reopens it on /auth with the token.
-        var deeplink = scheme + '://auth?' + payload;
-        // In a WebView an <a> click reliably fires the OS deep-link handler,
-        // where window.location assignment is often swallowed.
-        var a = document.createElement('a');
-        a.href = deeplink;
-        a.style.display = 'none';
-        document.body.appendChild(a);
-        a.click();
-        // Fallbacks in case the click is blocked.
-        setTimeout(function () { window.location.href = deeplink; }, 150);
-        setTimeout(function () { window.location = deeplink; }, 400);
-      } else {
-        // Web: forward straight to the in-app /auth handler via the hash.
-        window.location.replace('/auth#' + payload);
-      }
+      var deeplink = (scheme || 'myapp') + '://auth?' + payload;
+
+      // An <a> click reliably fires the OS deep-link handler where a plain
+      // window.location assignment is often swallowed by the browser.
+      var a = document.createElement('a');
+      a.href = deeplink;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      // Fallbacks in case the click is blocked.
+      setTimeout(function () { window.location.href = deeplink; }, 150);
+      setTimeout(function () { window.location = deeplink; }, 400);
     })();
   </script>
 </body>
