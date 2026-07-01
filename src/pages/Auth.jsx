@@ -8,10 +8,10 @@ export default function Auth() {
 
   useEffect(() => {
     // Check both query params (native deeplink) and hash (web OAuth redirect)
-    const hash         = new URLSearchParams(window.location.hash.substring(1))
-    const accessToken  = searchParams.get('access_token')  || hash.get('access_token')
-    const refreshToken = searchParams.get('refresh_token') || hash.get('refresh_token') || ''
-    const error        = searchParams.get('error')         || hash.get('error')
+    const hash            = new URLSearchParams(window.location.hash.substring(1))
+    const googleToken     = searchParams.get('access_token') || hash.get('access_token')
+    const base44Token     = searchParams.get('token')        || hash.get('token')
+    const error           = searchParams.get('error')        || hash.get('error')
 
     if (error) {
       console.error('Auth error:', error)
@@ -19,10 +19,21 @@ export default function Auth() {
       return
     }
 
-    if (accessToken) {
-      // Use Base44's setToken to establish the session, then hard redirect
-      base44.auth.setToken(accessToken)
+    if (base44Token) {
+      // Web flow: Base44 issues its own token directly (via loginWithProvider redirect)
+      base44.auth.setToken(base44Token)
       window.location.href = '/'
+      return
+    }
+
+    if (googleToken) {
+      // Native flow: exchange the Google access token for a Base44 session token
+      base44.auth.loginWithGoogle(googleToken)
+        .then(() => { window.location.href = '/' })
+        .catch((err) => {
+          console.error('Google token exchange failed:', err)
+          navigate('/login')
+        })
     }
   }, [searchParams, navigate])
 
