@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import * as customAuth from '@/lib/customAuth';
+import { useFocusEvents } from '@/hooks/useFocusEvents';
 
 const AuthContext = createContext();
 
@@ -30,6 +31,16 @@ export const AuthProvider = ({ children }) => {
     void base44;
     checkUserAuth();
   }, [checkUserAuth]);
+
+  // Native app resume: silently revalidate the session (no loading flash) so a
+  // token expired while backgrounded is caught the moment the user returns.
+  useFocusEvents({
+    onFocus: async () => {
+      const account = await customAuth.fetchMe();
+      setUser(account || null);
+      setIsAuthenticated(!!account);
+    },
+  });
 
   const logout = (shouldRedirect = true) => {
     customAuth.logout();
