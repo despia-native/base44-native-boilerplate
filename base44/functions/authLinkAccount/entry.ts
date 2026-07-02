@@ -85,7 +85,35 @@ Deno.serve(async (req) => {
       const cleanEmail = tokenInfo.email.toLowerCase().trim();
       const existing = await base44.asServiceRole.entities.Account.filter({ email: cleanEmail });
       if (existing?.length && existing[0].id !== account.id) {
-        return Response.json({ error: 'This Google account is already registered. Sign in with it instead.' }, { status: 409 });
+        // The Google email already belongs to a registered account, and Google has
+        // proven ownership — MERGE: move the device binding onto the existing
+        // account (so future device sign-ins resolve to it), delete the anonymous
+        // account, and sign the user into the existing one.
+        const target = existing[0];
+        await base44.asServiceRole.entities.Account.update(target.id, {
+          device_id: account.device_id || target.device_id || '',
+          google_id: target.google_id || tokenInfo.sub || '',
+          avatar_url: target.avatar_url || tokenInfo.picture || '',
+          email_verified: true,
+          last_login_at: new Date().toISOString(),
+        });
+        // NOTE: if app entities ever reference the account id, re-point the
+        // anonymous account's records to target.id here before deleting.
+        await base44.asServiceRole.entities.Account.delete(account.id);
+
+        const mergedToken = await signJwt({ sub: target.id, email: target.email, role: target.role }, secret);
+        return Response.json({
+          token: mergedToken,
+          account: {
+            id: target.id,
+            email: target.email,
+            full_name: target.full_name,
+            role: target.role,
+            avatar_url: target.avatar_url || tokenInfo.picture || null,
+            email_verified: true,
+            is_anonymous: false,
+          },
+        });
       }
 
       updates = {
