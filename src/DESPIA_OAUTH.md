@@ -1,11 +1,6 @@
 # Native Google OAuth + Custom Auth — Base44 + Despia
 
-> ⚠️ **This file is a pointer.** The full, up-to-date documentation lives at the
-> project root: [`/DESPIA_OAUTH.md`](../DESPIA_OAUTH.md).
->
-> An older version of this file described a different approach (Base44 built-in
-> tokens via `sso.getAccessToken` + `inviteUser`). **That is not what this app does.**
-> This app runs a fully custom auth system on top of Base44's backend.
+> **This file is a pointer.** The full documentation lives at the project root: [`/DESPIA_OAUTH.md`](../DESPIA_OAUTH.md).
 
 ---
 

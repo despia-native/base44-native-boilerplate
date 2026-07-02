@@ -286,20 +286,17 @@ Dashboard → **Settings** → **Environment Variables**:
 | `GOOGLE_CLIENT_SECRET` | `GOCSPX-xxxx` |
 | `JWT_SECRET` | a long random string — signs your session tokens |
 | `RESEND_API_KEY` | for password-reset emails |
+| `APP_BASE_URL` | your app's public Base44 URL, e.g. `https://YOUR-APP.base44.app` (no trailing slash) — must match the Google redirect URI domain |
 
 ### Step 3 — Deeplink Scheme
 
-In `src/pages/Login.jsx`, use your actual Despia scheme in place of `myapp`.
+In `src/config/app-config.js`, set `deeplinkScheme` to your actual Despia scheme (default `myapp`). This is the only frontend value to change — `Login.jsx` reads it automatically.
 
 ### Step 4 — Register Deeplink in Despia
 
 In your Despia project settings:
-- **Scheme:** `myapp` (or yours)
+- **Scheme:** matches `appConfig.deeplinkScheme`
 - **Allowed path:** `oauth/auth`
-
-### Step 5 — App URL
-
-In `base44/functions/googleAuthUrl/entry.ts`, set `APP_BASE_URL` to your app's public Base44 URL.
 
 ---
 
@@ -392,9 +389,11 @@ If you're explaining this to someone, these are the ideas that unlock it:
 
 ## What to Change Per Project
 
-1. `base44/functions/googleAuthUrl/entry.ts` → `APP_BASE_URL`
-2. `src/pages/Login.jsx` → Despia deeplink scheme (`myapp`)
-3. Base44 secrets: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `JWT_SECRET`, `RESEND_API_KEY`
+Everything per-project lives in exactly three spots (full checklist in [`/src/TEMPLATE_SETUP.md`](./src/TEMPLATE_SETUP.md)):
+
+1. **`src/config/app-config.js`** → `deeplinkScheme` (the only frontend edit)
+2. **Base44 secrets:** `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `JWT_SECRET`, `RESEND_API_KEY`, `APP_BASE_URL`
+3. **External accounts:** Google Cloud Console redirect URI + Despia scheme/path
 
 ---
 
