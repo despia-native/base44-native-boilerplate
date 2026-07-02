@@ -30,4 +30,13 @@
 
 Base44's built-in auth can't create users programmatically, can't fully control the `User` record, and its redirect flow breaks in a native WebView. The custom system fixes all of that (own `Account` entity, own JWTs, native `oauth://` bridge) **while still running entirely on Base44's backend**.
 
-👉 **See [`/DESPIA_OAUTH.md`](../DESPIA_OAUTH.md) for the complete guide**, including the architecture diagram, per-function breakdown, setup checklist, and troubleshooting.
+### The full guide covers
+
+👉 **[`/DESPIA_OAUTH.md`](../DESPIA_OAUTH.md)** — the complete teaching guide:
+
+- **The mental model** — why a WebView breaks normal OAuth, the two-token concept, what a JWT session actually is, and why Base44 is your backend (not your auth).
+- **How Despia + Base44 fit together** — who owns which layer (transport vs. compute vs. identity).
+- **Part 1 — native Google sign-in in Despia** — full flow, clean redirect URI, boot-time token capture, why implicit flow.
+- **Part 2 — the custom auth system** — `Account` data model, JWT sessions, PBKDF2 passwords, every backend function.
+- **Guided walkthrough with checkpoints** — prove each layer works before adding the next.
+- **Security notes**, **when NOT to use this**, a **teaching cheat-sheet**, troubleshooting table, and per-project changes.

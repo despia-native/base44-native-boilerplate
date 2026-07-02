@@ -19,6 +19,59 @@ You get the flexibility of a hand-rolled auth system with the zero-ops convenien
 
 ---
 
+## Who This Guide Is For
+
+- You're building a Base44 app and wrapping it in **Despia** to ship a real native iOS/Android app.
+- You need **Google Sign-In to work inside the native app**, not just on the web.
+- You want to **own your users** — custom fields, your own admin tools, your own session rules — instead of being limited by a built-in auth model.
+
+If you only need web login and Base44's `User` entity is enough for you, you probably **don't** need this — see [When NOT to Use This](#when-not-to-use-this) below. This guide is for the custom case.
+
+---
+
+## The Mental Model (read this first)
+
+Before any code, get these four ideas straight. Everything else follows from them.
+
+### 1. A Despia app is a WebView, and WebViews break normal OAuth
+
+Despia doesn't rebuild your app natively — it loads your Base44 web app inside a **WebView** (an embedded browser view: `WKWebView` on iOS, `WebView` on Android). Your React app runs exactly as it does on the web.
+
+The problem: the classic "Sign in with Google" flow is a **full-page redirect**. The browser leaves your site, goes to `accounts.google.com`, and Google redirects *back* to your site with the result. Inside a WebView, that "back" redirect often opens in the **system browser (Safari/Chrome), not your WebView** — so the token lands in a browser your app can't read, and the user is stranded. That's why "it works on the web but not in the app."
+
+**The fix is to stop relying on a page redirect to bring the token home.** Instead we use two Despia-native mechanisms:
+- **`oauth://` bridge** — hands Google's login page to a *secure in-app browser* Despia controls.
+- **Custom-scheme deep links** (`myapp://…`) — the way a native app receives a URL and routes it back into the WebView. This is how the token gets *back into your app* reliably.
+
+### 2. There are TWO different tokens — don't confuse them
+
+This trips everyone up. Two completely different tokens exist in this flow:
+
+| Token | Who issues it | What it proves | What you do with it |
+|---|---|---|---|
+| **Google access token** (`ya29...`) | Google | "This person is a real Google user with this email" | Send it to your backend **once**, then throw it away. It is **not** a session. |
+| **Your app JWT** | Your `googleSignIn` / `authLogin` backend | "This person is logged into *your* app as this Account" | Store it, and send it with every request. **This is the session.** |
+
+The Google token is a *proof of identity for one moment*. Your JWT is the *ongoing session*. The whole point of the `googleSignIn` backend function is to **trade the first for the second**: verify the Google token with Google, find/create the Account, and mint your own JWT.
+
+> If you ever find yourself trying to "log in with the Google token directly," stop — that's the confusion. The Google token never becomes the session.
+
+### 3. A "session" here is just a signed string you trust
+
+Your JWT is three base64 parts: `header.payload.signature`. The payload says who the user is (`sub`, `email`, `role`) and when it expires. The signature is an HMAC-SHA256 of the first two parts using your secret (`JWT_SECRET`).
+
+Because only your backend knows `JWT_SECRET`, only your backend can produce a valid signature — so when a request arrives carrying a JWT, the backend re-computes the signature and, if it matches, **trusts the payload without a database lookup for the identity**. That's the entire idea of a stateless session. No session table, no server memory — the token *is* the proof.
+
+Consequences to internalize:
+- **Change `JWT_SECRET` → every existing session dies** (old signatures no longer verify). Set it once, keep it stable.
+- **The token is self-contained** — it works the same on web and inside Despia, in `localStorage`, wherever.
+
+### 4. Base44 is your backend, not your auth
+
+The insight that makes this whole thing possible: **you can use Base44 purely as a serverless backend + database + email, and build auth yourself on top.** Deno functions run your logic, the `Account` entity stores your users, Resend sends your emails. You never call `base44.auth.*` for login. Base44 doesn't "know" your users are logged in — and it doesn't need to, because *your* functions enforce it by verifying the JWT.
+
+---
+
 ## Why This Beats Base44's Built-In Auth
 
 Base44's built-in auth (`base44.auth`) is fast to start with but limited. This custom system removes those limits while keeping the easy backend:
@@ -71,6 +124,24 @@ Base44's built-in auth (`base44.auth`) is fast to start with but limited. This c
 ```
 
 **Key idea:** the frontend holds *our* JWT in `localStorage` and passes it to backend functions. Each protected function verifies the JWT and looks up the `Account`. Base44's own auth is never used for login.
+
+---
+
+## How Despia and Base44 Fit Together
+
+They occupy different layers and never fight over auth — that's *why* this works:
+
+| Layer | Owned by | Responsibility |
+|---|---|---|
+| Native shell (iOS/Android app, app store presence, deep-link scheme) | **Despia** | Wrap the web app, provide the `oauth://` in-app browser, intercept `myapp://` deep links |
+| Web app (React UI, routing, session storage) | **Your code** | Render UI, hold the JWT, gate routes |
+| Serverless backend (Deno functions) | **Base44** (your code runs on it) | Verify tokens, hash passwords, mint JWTs, read/write the `Account` entity |
+| Database (`Account` entity) + email (Resend) | **Base44** | Store users, send reset emails |
+| Identity provider | **Google** | Confirm the user is who they say |
+
+Despia's only job in auth is **transport**: get Google's login page open in a browser it controls, and get the resulting token *back into the WebView* via a deep link. It does not verify anything or store users. Base44's only job is **backend compute + storage**. Google is the source of identity truth. Your code is the glue that turns "Google says this email is real" into "this Account has a valid session."
+
+Because Despia handles transport and Base44 handles compute, **neither one owns the session** — you do, via the JWT. That separation is the whole trick.
 
 ---
 
@@ -229,6 +300,79 @@ In your Despia project settings:
 ### Step 5 — App URL
 
 In `base44/functions/googleAuthUrl/entry.ts`, set `APP_BASE_URL` to your app's public Base44 URL.
+
+---
+
+## Guided Walkthrough (with checkpoints)
+
+Do these in order. After each step there's a **checkpoint** — a concrete thing you can verify before moving on. Skipping checkpoints is how people end up stuck for hours.
+
+### 1. Prove the backend works before touching native
+
+Deploy the auth functions and test **email/password first** — it has no Despia or Google moving parts, so it isolates the backend.
+
+1. Register a test account through the app on the **web** (not in Despia).
+2. Reload the page — you should stay logged in (the JWT is in `localStorage`, `authMe` re-validates it on boot).
+
+> **Checkpoint:** you can register, log out, log back in, and refresh without being kicked to `/login`. If this fails, the problem is `JWT_SECRET` or `authMe` — fix it here, before adding Google or Despia.
+
+### 2. Prove Google works on the web
+
+On the web, `Login.jsx` takes the non-Despia branch. Sign in with Google in a normal browser tab.
+
+> **Checkpoint:** Google web sign-in lands you in the app as an `Account`. If it fails with `redirect_uri_mismatch`, the redirect URI in Google Console doesn't *exactly* match `https://YOUR-APP.base44.app/native-callback.html` (no query string, no trailing slash).
+
+### 3. Wrap in Despia and register the deep link
+
+In Despia project settings, set your **scheme** (e.g. `myapp`) and allow the **path** `oauth/auth`. Rebuild the native app.
+
+> **Checkpoint (isolate the deep link):** temporarily make a button fire `myapp://oauth/auth?token=test123`. If the app foregrounds and the WebView navigates with `token=test123` visible, deep links work. If nothing happens, the scheme/path isn't registered in Despia — nothing else will work until this does.
+
+### 4. Run the full native Google flow
+
+Now tap "Sign in with Google" inside the Despia app. Trace the flow from [Part 1](#part-1--native-google-sign-in-in-despia): in-app browser → Google → `native-callback.html` → deep link → `Auth.jsx` → `googleSignIn` → JWT.
+
+> **Checkpoint:** you land in the app signed in, and a new `Account` appears in the database with the right email. If you're bounced to `/login` instantly, it's the boot-time capture issue — confirm `main.jsx` rewrites a token-bearing URL to `/auth` *before* React mounts (see [Boot-Time Token Capture](#critical-boot-time-token-capture)).
+
+---
+
+## Security Notes (don't skip)
+
+This is real auth — treat it like it.
+
+- **`JWT_SECRET` must be long and random** (32+ bytes). Anyone who has it can forge sessions for any user. Never commit it; keep it only in Base44 env vars.
+- **Always verify the Google token server-side.** `googleSignIn` calls Google's `tokeninfo` endpoint — never trust a token the client claims is valid. A client can send anything; Google's confirmation is the gate.
+- **Passwords are PBKDF2-hashed** (100k iterations, per-user random salt). Plaintext passwords are never stored or logged.
+- **Login errors are generic** ("Invalid email or password") so an attacker can't tell which emails have accounts (no user enumeration).
+- **Password-reset responses are always generic success**, for the same reason — the email tells the real user; the response tells the attacker nothing.
+- **Every protected backend function re-verifies the JWT.** The frontend gate (`ProtectedRoute`) is UX only — real enforcement is server-side, on each call.
+- **Admin functions check `role === 'admin'` on the server**, not just in the UI. Hiding an admin button is not security.
+- **Tokens expire (30 days here).** Shorten it if your app is sensitive; there's no server-side revocation with stateless JWTs, so expiry is your main lever (that, or rotating `JWT_SECRET`, which logs everyone out).
+
+---
+
+## When NOT to Use This
+
+Custom auth is more code to own. Skip it and use Base44's built-in `base44.auth` if **all** of these are true:
+
+- You're only shipping a **web app** (or Base44's own mobile publishing), not a Despia WebView that needs native Google sign-in.
+- Base44's read-only `User` entity + `updateMe` extras cover your user data — you don't need to create users programmatically or attach lots of custom fields.
+- You're fine with Base44 owning the session lifetime and reset emails.
+
+Reach for **this custom system** when you need native OAuth in Despia, full control over the user record, your own session/JWT rules, or your own admin tooling — i.e. the things the [comparison table](#why-this-beats-base44s-built-in-auth) marks ✅ only on the right.
+
+---
+
+## Teaching Cheat-Sheet (the 6 things people miss)
+
+If you're explaining this to someone, these are the ideas that unlock it:
+
+1. **Despia = WebView.** Normal OAuth redirects escape the WebView; that's the root problem.
+2. **Two tokens.** Google token = one-time proof. Your JWT = the session. Trade one for the other on the backend.
+3. **Deep links carry the token home.** `myapp://oauth/auth?token=...` is how the native shell hands the token back to the WebView.
+4. **The JWT is the session** — a signed string your backend trusts because only it knows `JWT_SECRET`.
+5. **Base44 is backend, not auth.** Functions + `Account` entity + Resend; `base44.auth` is never used for login.
+6. **Verify server-side, always.** Google token verified with Google; JWT verified on every call; roles checked on the server.
 
 ---
 
