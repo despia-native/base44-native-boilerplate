@@ -1,62 +1,90 @@
-import { Link } from 'react-router-dom'
-import { Users, ChevronRight } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Users, LogOut, ShieldCheck, Mail } from 'lucide-react'
 import { useAuth } from '@/lib/AuthContext'
+import ListRow from '@/components/mobile/ListRow'
 
 export default function Home() {
   const { user, logout } = useAuth()
+  const navigate = useNavigate()
+  const isAdmin = user?.role === 'admin'
 
   return (
-    <div className="scroll-container flex flex-col items-center justify-center bg-background px-6 pt-safe-top pb-safe-bottom">
-      <div className="w-full max-w-sm flex flex-col items-center">
-        {/* Avatar + identity */}
-        <div className="flex flex-col items-center text-center">
+    <div className="flex flex-col h-full bg-muted/40">
+      {/* Fixed top bar */}
+      <header className="shrink-0 pt-safe-top bg-background/80 backdrop-blur-xl border-b border-border/60">
+        <div className="h-11 flex items-center justify-center">
+          <h1 className="text-[17px] font-semibold text-foreground">Account</h1>
+        </div>
+      </header>
+
+      {/* Scrollable content */}
+      <div className="scroll-container px-4 pb-safe-bottom">
+        {/* Profile header */}
+        <div className="flex flex-col items-center text-center pt-8 pb-6">
           {user?.avatar_url ? (
             <img
               src={user.avatar_url}
               alt=""
-              className="w-24 h-24 rounded-full object-cover ring-1 ring-black/5 shadow-sm"
+              className="w-20 h-20 rounded-full object-cover ring-1 ring-black/5 shadow-sm"
             />
           ) : (
-            <div className="w-24 h-24 rounded-full bg-gradient-to-b from-muted to-secondary flex items-center justify-center text-foreground/80 text-3xl font-semibold ring-1 ring-black/5 shadow-sm">
+            <div className="w-20 h-20 rounded-full bg-gradient-to-b from-muted to-secondary flex items-center justify-center text-foreground/80 text-2xl font-semibold ring-1 ring-black/5 shadow-sm">
               {user?.full_name?.[0] || user?.email?.[0] || '?'}
             </div>
           )}
-          <h1 className="mt-5 text-2xl font-semibold tracking-tight text-foreground">
+          <h2 className="mt-4 text-[22px] font-semibold tracking-tight text-foreground">
             {user?.full_name || 'Welcome'}
-          </h1>
-          {user?.email && (
-            <p className="mt-1 text-sm text-muted-foreground">{user.email}</p>
-          )}
-          {user?.role === 'admin' && (
-            <span className="mt-3 inline-flex items-center rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground">
-              Administrator
+          </h2>
+          {isAdmin && (
+            <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground">
+              <ShieldCheck className="w-3 h-3" /> Administrator
             </span>
           )}
         </div>
 
-        {/* Actions */}
-        <div className="mt-10 w-full space-y-3">
-          {user?.role === 'admin' && (
-            <Link
-              to="/admin/users"
-              className="flex items-center gap-3 w-full rounded-2xl bg-card border border-border/60 px-4 py-3.5 shadow-sm active:scale-[0.99] transition-transform"
-            >
-              <span className="flex items-center justify-center w-9 h-9 rounded-full bg-secondary">
-                <Users className="w-4.5 h-4.5 text-foreground/70" />
-              </span>
-              <span className="flex-1 text-left text-sm font-medium text-foreground">
-                Manage users
-              </span>
-              <ChevronRight className="w-4 h-4 text-muted-foreground" />
-            </Link>
-          )}
+        {/* Info group */}
+        <div className="rounded-xl bg-card border border-border/60 overflow-hidden shadow-sm">
+          <ListRow
+            icon={Mail}
+            iconBg="bg-primary/10"
+            iconColor="text-primary"
+            label="Email"
+            value={user?.email}
+            showChevron={false}
+            first
+          />
+        </div>
 
-          <button
+        {/* Admin group */}
+        {isAdmin && (
+          <>
+            <p className="px-4 pt-6 pb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Admin
+            </p>
+            <div className="rounded-xl bg-card border border-border/60 overflow-hidden shadow-sm">
+              <ListRow
+                icon={Users}
+                iconBg="bg-secondary/15"
+                iconColor="text-secondary"
+                label="Manage users"
+                onClick={() => navigate('/admin/users')}
+                first
+              />
+            </div>
+          </>
+        )}
+
+        {/* Sign out */}
+        <div className="mt-6 rounded-xl bg-card border border-border/60 overflow-hidden shadow-sm">
+          <ListRow
+            icon={LogOut}
+            iconBg="bg-destructive/10"
+            label="Sign out"
+            danger
+            showChevron={false}
             onClick={() => logout()}
-            className="w-full rounded-2xl bg-card border border-border/60 px-4 py-3.5 text-sm font-medium text-destructive shadow-sm active:scale-[0.99] transition-transform"
-          >
-            Sign out
-          </button>
+            first
+          />
         </div>
       </div>
     </div>
