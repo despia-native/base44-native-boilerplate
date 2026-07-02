@@ -18,7 +18,7 @@ export default function Home() {
       </header>
 
       {/* Scrollable content */}
-      <div className="scroll-container px-4 pb-safe-bottom">
+      <div className="scroll-container px-5 pb-safe-bottom">
         {/* Profile header */}
         <div className="flex flex-col items-center text-center pt-8 pb-6">
           {user?.avatar_url ? (

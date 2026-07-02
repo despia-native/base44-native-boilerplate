@@ -84,7 +84,7 @@ export default function AdminUsers() {
         </div>
       </header>
 
-      <div className="scroll-container px-4 pb-safe-bottom">
+      <div className="scroll-container px-5 pb-safe-bottom">
         <p className="px-1 pt-5 pb-3 text-[13px] text-muted-foreground">
           {accounts.length} account{accounts.length === 1 ? '' : 's'}
         </p>

@@ -34,10 +34,10 @@
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
-    --font-heading: ui-sans-serif, system-ui, sans-serif;
-    --font-body: ui-sans-serif, system-ui, sans-serif;
-    --font-display: ui-sans-serif, system-ui, sans-serif;
+    --radius: 0.75rem;
+    --font-heading: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+    --font-body: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif;
+    --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -133,6 +133,21 @@
 
   body {
     @apply bg-background text-foreground font-body;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-heading tracking-tight;
+  }
+
+  /* iOS: prevent input zoom + remove tap highlight for a native feel */
+  input, select, textarea {
+    font-size: 16px;
+  }
+  * {
+    -webkit-tap-highlight-color: transparent;
   }
 
   /* Despia native structure: no body scroll — content scrolls in dedicated containers.
