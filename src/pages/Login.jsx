@@ -1,11 +1,12 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import despia from 'despia-native'
 import { base44 } from '@/api/base44Client'
 import * as customAuth from '@/lib/customAuth'
+import { signInWithDevice, isNative } from '@/lib/deviceAuth'
 import { appConfig } from '@/config/app-config'
 
-const isDespia = navigator.userAgent.toLowerCase().includes('despia')
+const isDespia = isNative()
 
 export default function Login() {
   const [mode, setMode] = useState('login') // 'login' | 'register'
@@ -14,6 +15,29 @@ export default function Login() {
   const [fullName, setFullName] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  // Loginless native flow: auto sign-in as a device-backed guest.
+  const [autoSignIn, setAutoSignIn] = useState(isDespia)
+
+  useEffect(() => {
+    if (!isDespia) return
+    let cancelled = false
+    signInWithDevice()
+      .then(() => { if (!cancelled) window.location.href = '/' })
+      .catch(() => { if (!cancelled) setAutoSignIn(false) }) // fall back to the normal form
+    return () => { cancelled = true }
+  }, [])
+
+  const handleFaceIdSignIn = async () => {
+    setError('')
+    setAutoSignIn(true)
+    try {
+      await signInWithDevice({ biometric: true })
+      window.location.href = '/'
+    } catch (err) {
+      setAutoSignIn(false)
+      setError(err?.response?.data?.error || err?.message || 'Face ID sign-in failed')
+    }
+  }
 
   const handleGoogleSignIn = async () => {
     setError('')
@@ -43,6 +67,15 @@ export default function Login() {
       setError(msg)
       setLoading(false)
     }
+  }
+
+  if (autoSignIn) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background px-6 gap-4">
+        <div className="w-8 h-8 border-4 border-muted border-t-primary rounded-full animate-spin" />
+        <p className="text-sm text-muted-foreground">Setting up your session…</p>
+      </div>
+    )
   }
 
   return (
@@ -126,6 +159,20 @@ export default function Login() {
           </svg>
           Continue with Google
         </button>
+
+        {isDespia && (
+          <button
+            type="button"
+            onClick={handleFaceIdSignIn}
+            className="w-full flex items-center justify-center gap-3 border border-border rounded-lg px-4 py-3 bg-background hover:bg-muted transition-colors text-sm font-medium text-foreground shadow-sm"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 8V6a2 2 0 0 1 2-2h2M4 16v2a2 2 0 0 0 2 2h2M16 4h2a2 2 0 0 1 2 2v2M16 20h2a2 2 0 0 0 2-2v-2" />
+              <path d="M9 9h.01M15 9h.01M9.5 15a3.5 3.5 0 0 0 5 0M12 9v4" />
+            </svg>
+            Continue as guest with Face ID
+          </button>
+        )}
 
         <button
           type="button"

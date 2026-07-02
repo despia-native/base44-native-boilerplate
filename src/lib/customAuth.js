@@ -23,6 +23,9 @@ async function invoke(fn, payload = {}) {
   return res.data;
 }
 
+// Exposed for other auth helpers (e.g. deviceAuth) that need to hit auth functions.
+export const invokeAuth = invoke;
+
 export async function register({ email, password, full_name }) {
   const data = await invoke('authRegister', { email, password, full_name });
   setToken(data.token);
