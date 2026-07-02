@@ -10,125 +10,206 @@
     --safe-area-bottom: env(safe-area-inset-bottom, 0px);
     --safe-area-left: env(safe-area-inset-left, 0px);
     --safe-area-right: env(safe-area-inset-right, 0px);
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 217 89% 61%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 136 53% 43%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 80%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 45 97% 50%;
-    --accent-foreground: 0 0% 9%;
-    --destructive: 5 81% 56%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --radius: 0.75rem;
-    --font-heading: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
-    --font-body: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif;
-    --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+
+    /* ── Ember brand (theme-independent) ── */
+    --ember: #ff5c1f;
+    --ember-hi: #ff7038;
+    --ember-lo: #f04e12;
+    --spring: cubic-bezier(.3,1.7,.5,1);
+    --ease-out: cubic-bezier(.3,1.1,.4,1);
+    --ring-ember: 0 0 0 0.0625rem var(--ember), 0 0 0 0.25rem color-mix(in srgb, var(--ember) 20%, transparent);
+
+    /* ── Semantic tokens: Ember light ── */
+    --background: 40 19% 94%;
+    --foreground: 260 24% 10%;
+    --card: 40 27% 98%;
+    --card-foreground: 260 24% 10%;
+    --popover: 40 27% 98%;
+    --popover-foreground: 260 24% 10%;
+    --primary: 16 100% 56%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 148 60% 44%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 40 10% 88%;
+    --muted-foreground: 260 8% 45%;
+    --accent: 40 10% 88%;
+    --accent-foreground: 260 24% 10%;
+    --destructive: 0 89% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 260 8% 86%;
+    --input: 260 8% 86%;
+    --ring: 16 100% 56%;
+    --chart-1: 16 100% 56%;
+    --chart-2: 148 60% 44%;
+    --chart-3: 210 100% 56%;
+    --chart-4: 265 80% 62%;
+    --chart-5: 40 90% 54%;
+    --radius: 1rem;
+
+    /* ── Ember materials: light ── */
+    --hairline: rgba(23,19,31,.08);
+    --glass-grad: linear-gradient(180deg, rgba(255,255,255,.85), rgba(255,255,255,.5));
+    --glass-grad-hi: linear-gradient(180deg, rgba(255,255,255,.95), rgba(255,255,255,.65));
+    --convex:
+      inset 0 0.0938rem 0.0625rem rgba(255,255,255,1),
+      inset 0 -0.125rem 0.25rem rgba(23,19,31,.08),
+      0 0 0 0.0313rem rgba(23,19,31,.07),
+      0 0.375rem 1rem rgba(23,19,31,.08);
+    --convex-press:
+      inset 0 0.125rem 0.25rem rgba(23,19,31,.1),
+      inset 0 -0.0625rem 0.0625rem rgba(255,255,255,.9),
+      0 0.25rem 0.625rem rgba(23,19,31,.06);
+    --primary-grad: linear-gradient(180deg, #2a2532, #17131f);
+    --primary-fg: #f4f2ee;
+    --primary-convex:
+      inset 0 0.0938rem 0.0625rem rgba(255,255,255,.22),
+      inset 0 -0.125rem 0.25rem rgba(0,0,0,.4),
+      0 0.625rem 1.5rem rgba(23,19,31,.25);
+    --primary-press:
+      inset 0 0.125rem 0.25rem rgba(0,0,0,.5),
+      inset 0 -0.0625rem 0.0625rem rgba(255,255,255,.12),
+      0 0.375rem 0.875rem rgba(23,19,31,.2);
+    --card-grad: linear-gradient(180deg, rgba(255,255,255,.95), rgba(255,255,255,.75));
+    --card-shadow:
+      inset 0 0.0625rem 0.0625rem rgba(255,255,255,1),
+      inset 0 -0.0625rem 0.125rem rgba(23,19,31,.05),
+      0 0.625rem 1.75rem rgba(23,19,31,.08);
+    --track: rgba(23,19,31,.1);
+    --track-inset: inset 0 0.0938rem 0.1875rem rgba(23,19,31,.18), inset 0 -0.0625rem 0.0625rem rgba(255,255,255,.7);
+    --scrim: rgba(23,19,31,.4);
+
+    /* Rounded system font stack — SF Pro Rounded on Apple devices */
+    --font-heading: ui-rounded, -apple-system, BlinkMacSystemFont, 'SF Pro Rounded', 'Segoe UI', Roboto, system-ui, sans-serif;
+    --font-body: ui-rounded, -apple-system, BlinkMacSystemFont, 'SF Pro Rounded', 'Segoe UI', Roboto, system-ui, sans-serif;
+    --font-display: ui-rounded, -apple-system, BlinkMacSystemFont, 'SF Pro Rounded', 'Segoe UI', Roboto, system-ui, sans-serif;
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+
+    --sidebar-background: 40 27% 98%;
+    --sidebar-foreground: 260 24% 10%;
+    --sidebar-primary: 16 100% 56%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 40 10% 88%;
+    --sidebar-accent-foreground: 260 24% 10%;
+    --sidebar-border: 260 8% 86%;
+    --sidebar-ring: 16 100% 56%;
   }
 
   @media (prefers-color-scheme: dark) {
     :root:not(.light) {
     color-scheme: dark;
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --background: 240 8% 5%;
+    --foreground: 40 21% 95%;
+    --card: 240 5% 8%;
+    --card-foreground: 40 21% 95%;
+    --popover: 240 5% 8%;
+    --popover-foreground: 40 21% 95%;
+    --primary: 16 100% 56%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 148 60% 47%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 240 5% 12%;
+    --muted-foreground: 40 10% 64%;
+    --accent: 240 5% 15%;
+    --accent-foreground: 40 21% 95%;
+    --destructive: 0 89% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 240 5% 16%;
+    --input: 240 5% 16%;
+    --ring: 16 100% 56%;
+
+    --hairline: rgba(255,255,255,.08);
+    --glass-grad: linear-gradient(180deg, rgba(255,255,255,.11), rgba(255,255,255,.055));
+    --glass-grad-hi: linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.07));
+    --convex:
+      inset 0 0.0938rem 0.0625rem rgba(255,255,255,.16),
+      inset 0 -0.125rem 0.25rem rgba(0,0,0,.3),
+      0 0 0 0.0313rem rgba(255,255,255,.07),
+      0 0.5rem 1.25rem rgba(0,0,0,.3);
+    --convex-press:
+      inset 0 0.125rem 0.25rem rgba(0,0,0,.4),
+      inset 0 -0.0625rem 0.0625rem rgba(255,255,255,.1),
+      0 0.3125rem 0.875rem rgba(0,0,0,.25);
+    --primary-grad: linear-gradient(180deg, #ffffff, #ebe8e2);
+    --primary-fg: #111111;
+    --primary-convex:
+      inset 0 0.0938rem 0.0625rem rgba(255,255,255,1),
+      inset 0 -0.125rem 0.1875rem rgba(0,0,0,.14),
+      inset 0 -0.375rem 0.625rem rgba(0,0,0,.05),
+      0 0.625rem 1.625rem rgba(0,0,0,.4);
+    --primary-press:
+      inset 0 0.125rem 0.25rem rgba(0,0,0,.15),
+      inset 0 -0.0625rem 0.0625rem rgba(255,255,255,.8),
+      0 0.375rem 1rem rgba(0,0,0,.35);
+    --card-grad: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.035));
+    --card-shadow:
+      inset 0 0.0625rem 0.0625rem rgba(255,255,255,.1),
+      inset 0 -0.0625rem 0.125rem rgba(0,0,0,.2),
+      0 0.75rem 2rem rgba(0,0,0,.35);
+    --track: rgba(255,255,255,.1);
+    --track-inset: inset 0 0.0938rem 0.1875rem rgba(0,0,0,.4), inset 0 -0.0625rem 0.0625rem rgba(255,255,255,.06);
+    --scrim: rgba(0,0,0,.6);
     }
   }
 
   .dark {
     color-scheme: dark;
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --background: 240 8% 5%;
+    --foreground: 40 21% 95%;
+    --card: 240 5% 8%;
+    --card-foreground: 40 21% 95%;
+    --popover: 240 5% 8%;
+    --popover-foreground: 40 21% 95%;
+    --primary: 16 100% 56%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 148 60% 47%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 240 5% 12%;
+    --muted-foreground: 40 10% 64%;
+    --accent: 240 5% 15%;
+    --accent-foreground: 40 21% 95%;
+    --destructive: 0 89% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 240 5% 16%;
+    --input: 240 5% 16%;
+    --ring: 16 100% 56%;
+
+    --hairline: rgba(255,255,255,.08);
+    --glass-grad: linear-gradient(180deg, rgba(255,255,255,.11), rgba(255,255,255,.055));
+    --glass-grad-hi: linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.07));
+    --convex:
+      inset 0 0.0938rem 0.0625rem rgba(255,255,255,.16),
+      inset 0 -0.125rem 0.25rem rgba(0,0,0,.3),
+      0 0 0 0.0313rem rgba(255,255,255,.07),
+      0 0.5rem 1.25rem rgba(0,0,0,.3);
+    --convex-press:
+      inset 0 0.125rem 0.25rem rgba(0,0,0,.4),
+      inset 0 -0.0625rem 0.0625rem rgba(255,255,255,.1),
+      0 0.3125rem 0.875rem rgba(0,0,0,.25);
+    --primary-grad: linear-gradient(180deg, #ffffff, #ebe8e2);
+    --primary-fg: #111111;
+    --primary-convex:
+      inset 0 0.0938rem 0.0625rem rgba(255,255,255,1),
+      inset 0 -0.125rem 0.1875rem rgba(0,0,0,.14),
+      inset 0 -0.375rem 0.625rem rgba(0,0,0,.05),
+      0 0.625rem 1.625rem rgba(0,0,0,.4);
+    --primary-press:
+      inset 0 0.125rem 0.25rem rgba(0,0,0,.15),
+      inset 0 -0.0625rem 0.0625rem rgba(255,255,255,.8),
+      0 0.375rem 1rem rgba(0,0,0,.35);
+    --card-grad: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.035));
+    --card-shadow:
+      inset 0 0.0625rem 0.0625rem rgba(255,255,255,.1),
+      inset 0 -0.0625rem 0.125rem rgba(0,0,0,.2),
+      0 0.75rem 2rem rgba(0,0,0,.35);
+    --track: rgba(255,255,255,.1);
+    --track-inset: inset 0 0.0938rem 0.1875rem rgba(0,0,0,.4), inset 0 -0.0625rem 0.0625rem rgba(255,255,255,.06);
+    --scrim: rgba(0,0,0,.6);
   }
 }
 
-
-
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
   }
 
   body {
@@ -150,8 +231,21 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* Despia native structure: no body scroll — content scrolls in dedicated containers.
-     Prevents conflicts with fixed positioning, pull-to-refresh, and safe-area handling. */
+  /* One accessible keyboard-focus ring everywhere (ember) */
+  :where(button, input, select, textarea, a, summary, [role="button"], [tabindex]):focus-visible {
+    outline: 0.125rem solid var(--ember);
+    outline-offset: 0.125rem;
+  }
+  :where(button, input, select, textarea, a, summary):focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* kills the double-tap zoom delay on everything tappable */
+  button, a, label, summary, input, select, textarea {
+    touch-action: manipulation;
+  }
+
+  /* Despia native structure: no body scroll — content scrolls in dedicated containers. */
   html, body {
     height: 100%;
     overflow: hidden;
@@ -164,6 +258,13 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
 
@@ -182,33 +283,123 @@
     display: none;
   }
 
-  /* iOS 26 "Liquid Glass" chrome — heavy blur + saturation, inner top highlight */
-  .liquid-glass {
-    background: hsl(var(--background) / 0.6);
-    backdrop-filter: blur(28px) saturate(180%);
-    -webkit-backdrop-filter: blur(28px) saturate(180%);
-    border: 1px solid hsl(var(--border) / 0.5);
-    box-shadow:
-      0 8px 32px rgb(0 0 0 / 0.1),
-      0 1px 2px rgb(0 0 0 / 0.04),
-      inset 0 1px 0 rgb(255 255 255 / 0.45),
-      inset 0 -1px 0 rgb(255 255 255 / 0.08);
+  /* ── Ember materials ─────────────────────────────────────────────
+     Two materials only: translucent convex glass for secondary things,
+     high-contrast convex primary/accent — one per screen. */
+
+  .ember-glass {
+    background: var(--glass-grad);
+    box-shadow: var(--convex);
   }
-  .dark .liquid-glass {
-    background: hsl(var(--background) / 0.55);
-    box-shadow:
-      0 8px 32px rgb(0 0 0 / 0.45),
-      inset 0 1px 0 rgb(255 255 255 / 0.1);
+  .ember-glass-hi {
+    background: var(--glass-grad-hi);
+    box-shadow: var(--convex);
+  }
+  .ember-press:active {
+    box-shadow: var(--convex-press);
   }
 
-  /* Softer glass for cards sitting on content */
-  .glass-card {
-    background: hsl(var(--card) / 0.72);
-    backdrop-filter: blur(20px) saturate(160%);
-    -webkit-backdrop-filter: blur(20px) saturate(160%);
-    border: 1px solid hsl(var(--border) / 0.5);
+  /* High-contrast primary (bone in dark, ink in light) */
+  .ember-primary {
+    background: var(--primary-grad);
+    color: var(--primary-fg);
+    box-shadow: var(--primary-convex);
+  }
+  .ember-primary:active {
+    box-shadow: var(--primary-press);
+  }
+
+  /* Ember accent — the one loud action per screen */
+  .ember-accent {
+    background: linear-gradient(180deg, var(--ember-hi), var(--ember-lo));
+    color: #fff;
     box-shadow:
-      0 4px 24px rgb(0 0 0 / 0.06),
-      inset 0 1px 0 rgb(255 255 255 / 0.4);
+      inset 0 0.0938rem 0.0625rem rgba(255,255,255,.45),
+      inset 0 -0.125rem 0.25rem rgba(120,30,0,.35),
+      0 0.5rem 1.25rem rgba(255,92,31,.28);
+  }
+  .ember-accent:active {
+    box-shadow:
+      inset 0 0.125rem 0.25rem rgba(120,30,0,.45),
+      inset 0 -0.0625rem 0.0625rem rgba(255,255,255,.3),
+      0 0.3125rem 0.75rem rgba(255,92,31,.22);
+  }
+
+  .ember-danger {
+    background: linear-gradient(180deg, #ff5a5a, #e02c2c);
+    color: #fff;
+    box-shadow:
+      inset 0 0.0938rem 0.0625rem rgba(255,255,255,.4),
+      inset 0 -0.125rem 0.25rem rgba(100,0,0,.35),
+      0 0.5rem 1.25rem rgba(244,63,63,.25);
+  }
+  .ember-danger:active {
+    box-shadow:
+      inset 0 0.125rem 0.25rem rgba(100,0,0,.45),
+      inset 0 -0.0625rem 0.0625rem rgba(255,255,255,.3),
+      0 0.3125rem 0.75rem rgba(244,63,63,.2);
+  }
+
+  /* Raised content card */
+  .ember-card {
+    background: var(--card-grad);
+    box-shadow: var(--card-shadow);
+  }
+
+  /* Recessed track (progress, switches, skeletons) */
+  .ember-track {
+    background: var(--track);
+    box-shadow: var(--track-inset);
+  }
+
+  /* Pill text input sharing the glass material */
+  .ember-input {
+    width: 100%;
+    height: 3.5rem;
+    border-radius: 62.4375rem;
+    border: none;
+    outline: none;
+    padding: 0 1.5rem;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    color: hsl(var(--foreground));
+    background: var(--glass-grad);
+    box-shadow: var(--convex);
+    transition: box-shadow .2s;
+  }
+  .ember-input::placeholder {
+    color: hsl(var(--muted-foreground) / .75);
+    font-weight: 600;
+  }
+  .ember-input:focus {
+    background: var(--glass-grad-hi);
+    box-shadow: var(--convex), var(--ring-ember);
+    outline: none;
+  }
+
+  /* Loading spinner inheriting the button's text color */
+  .ember-spinner {
+    width: 1.125rem;
+    height: 1.125rem;
+    border-radius: 50%;
+    border: 0.1562rem solid color-mix(in srgb, currentColor 28%, transparent);
+    border-top-color: currentColor;
+    animation: ember-spin .7s linear infinite;
+  }
+  @keyframes ember-spin { to { rotate: 360deg; } }
+
+  /* Floating chrome (header capsule + tab bar) — hi glass with heavy blur */
+  .liquid-glass {
+    background: var(--glass-grad-hi);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    box-shadow: var(--convex);
+  }
+
+  /* Legacy soft card alias */
+  .glass-card {
+    background: var(--card-grad);
+    box-shadow: var(--card-shadow);
   }
 }

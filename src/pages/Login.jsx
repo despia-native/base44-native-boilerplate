@@ -74,24 +74,24 @@ export default function Login() {
     }
   }
 
-  const inputClass = 'w-full bg-transparent px-4 py-3.5 text-[15px] text-foreground placeholder:text-muted-foreground outline-none'
+  const inputClass = 'ember-input'
 
   if (autoSignIn) {
     return (
-      <div className="flex flex-col h-full items-center justify-center bg-muted/40 px-6 gap-4 pt-safe-top pb-safe-bottom">
-        <div className="w-8 h-8 border-[3px] border-border border-t-foreground rounded-full animate-spin" />
+      <div className="flex flex-col h-full items-center justify-center bg-background px-6 gap-4 pt-safe-top pb-safe-bottom">
+        <div className="w-8 h-8 border-[3px] border-border border-t-primary rounded-full animate-spin" />
         <p className="text-[15px] text-muted-foreground">Setting up your session…</p>
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col h-full bg-muted/40">
+    <div className="flex flex-col h-full bg-background">
       <div className="scroll-container flex flex-col items-center justify-center px-5 pt-safe-top pb-safe-bottom">
         <div className="w-full max-w-sm flex flex-col items-center py-10">
           {/* App mark + title */}
           <div className="flex flex-col items-center gap-3 mb-8">
-            <div className="w-[72px] h-[72px] rounded-[22px] bg-primary flex items-center justify-center shadow-md">
+            <div className="w-[72px] h-[72px] rounded-[22px] ember-accent flex items-center justify-center">
               <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 2L2 7l10 5 10-5-10-5z"/>
                 <path d="M2 17l10 5 10-5"/>
@@ -107,8 +107,8 @@ export default function Login() {
           </div>
 
           <form onSubmit={handleSubmit} className="w-full flex flex-col gap-4">
-            {/* Grouped inputs — iOS inset style */}
-            <div className="rounded-2xl bg-card border border-border/60 overflow-hidden shadow-sm divide-y divide-border/60">
+            {/* Pill glass inputs */}
+            <div className="flex flex-col gap-3">
               {mode === 'register' && (
                 <input
                   type="text"
@@ -147,7 +147,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-full bg-primary text-primary-foreground px-4 py-3.5 text-[16px] font-semibold active:opacity-80 active:scale-[0.98] transition-all disabled:opacity-50 shadow-sm"
+              className="w-full h-14 rounded-full ember-primary text-[16px] font-bold active:scale-95 transition-transform disabled:opacity-40"
             >
               {loading ? 'Please wait…' : mode === 'register' ? 'Create Account' : 'Sign In'}
             </button>
@@ -162,7 +162,7 @@ export default function Login() {
           <div className="w-full flex flex-col gap-3">
             <button
               onClick={handleGoogleSignIn}
-              className="w-full flex items-center justify-center gap-3 rounded-full px-4 py-3.5 bg-card border border-border/60 shadow-sm active:bg-muted/60 active:scale-[0.98] transition-all text-[16px] font-medium text-foreground shadow-sm"
+              className="w-full h-14 flex items-center justify-center gap-3 rounded-full ember-glass ember-press active:scale-95 transition-transform text-[16px] font-semibold text-foreground"
             >
               <GoogleIcon className="w-5 h-5" />
               Continue with Google
@@ -172,7 +172,7 @@ export default function Login() {
               <button
                 type="button"
                 onClick={handleFaceIdSignIn}
-                className="w-full flex items-center justify-center gap-3 rounded-full px-4 py-3.5 bg-card border border-border/60 shadow-sm active:bg-muted/60 active:scale-[0.98] transition-all text-[16px] font-medium text-foreground shadow-sm"
+                className="w-full h-14 flex items-center justify-center gap-3 rounded-full ember-glass ember-press active:scale-95 transition-transform text-[16px] font-semibold text-foreground"
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M4 8V6a2 2 0 0 1 2-2h2M4 16v2a2 2 0 0 0 2 2h2M16 4h2a2 2 0 0 1 2 2v2M16 20h2a2 2 0 0 0 2-2v-2" />

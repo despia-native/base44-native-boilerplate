@@ -44,10 +44,10 @@ export default function LinkAccount() {
     }
   }
 
-  const inputClass = 'w-full bg-transparent px-4 py-3.5 text-[15px] text-foreground placeholder:text-muted-foreground outline-none'
+  const inputClass = 'ember-input'
 
   return (
-    <div className="flex flex-col h-full bg-muted/40">
+    <div className="flex flex-col h-full bg-background">
       <header className="shrink-0 pt-safe-top bg-background/80 backdrop-blur-xl border-b border-border/60">
         <div className="h-11 flex items-center px-2">
           <Link to="/account" className="flex items-center text-primary text-[17px] active:opacity-60">
@@ -67,7 +67,7 @@ export default function LinkAccount() {
           </p>
 
           <form onSubmit={handleSubmit} className="mt-8 w-full flex flex-col gap-4">
-            <div className="rounded-2xl bg-card border border-border/60 overflow-hidden shadow-sm divide-y divide-border/60">
+            <div className="flex flex-col gap-3">
               <input
                 type="text"
                 placeholder="Full name"
@@ -98,7 +98,7 @@ export default function LinkAccount() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-full bg-primary text-primary-foreground px-4 py-3.5 text-[16px] font-semibold active:opacity-80 active:scale-[0.98] transition-all disabled:opacity-50 shadow-sm"
+              className="w-full h-14 rounded-full ember-primary text-[16px] font-bold active:scale-95 transition-transform disabled:opacity-40"
             >
               {loading ? 'Linking…' : 'Add Email & Password'}
             </button>
@@ -112,7 +112,7 @@ export default function LinkAccount() {
 
           <button
             onClick={handleGoogleLink}
-            className="w-full flex items-center justify-center gap-3 rounded-full px-4 py-3.5 bg-card border border-border/60 shadow-sm active:bg-muted/60 active:scale-[0.98] transition-all text-[16px] font-medium text-foreground mb-10"
+            className="w-full h-14 flex items-center justify-center gap-3 rounded-full ember-glass ember-press active:scale-95 transition-transform text-[16px] font-semibold text-foreground mb-10"
           >
             <GoogleIcon className="w-5 h-5" />
             Link with Google

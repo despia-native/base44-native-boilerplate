@@ -11,7 +11,7 @@ export default function Account() {
   const isAdmin = user?.role === 'admin'
 
   return (
-    <div className="relative flex flex-col h-full bg-muted/40">
+    <div className="relative flex flex-col h-full bg-background">
       <GlassHeader title="Account" />
 
       <div className="scroll-container px-5" style={{ paddingTop: 'calc(var(--safe-area-top, 0px) + 72px)' }}>
@@ -53,7 +53,7 @@ export default function Account() {
           <button
             type="button"
             onClick={() => navigate('/link-account')}
-            className="w-full text-left rounded-2xl bg-card border border-border/60 shadow-sm p-4 mb-6 flex items-center gap-3.5 active:bg-muted/60 transition-colors"
+            className="w-full text-left rounded-3xl ember-card p-4 mb-6 flex items-center gap-3.5 active:bg-muted/60 transition-colors"
           >
             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
               <UserPlus className="w-5 h-5 text-primary" />
@@ -74,7 +74,7 @@ export default function Account() {
             <p className="px-1 pb-2 text-[13px] font-semibold uppercase tracking-wider text-muted-foreground">
               Details
             </p>
-            <div className="rounded-2xl bg-card border border-border/60 overflow-hidden shadow-sm">
+            <div className="rounded-3xl ember-card overflow-hidden">
               <ListRow
                 icon={Mail}
                 iconBg="bg-primary/10"
@@ -94,7 +94,7 @@ export default function Account() {
             <p className="px-1 pt-6 pb-2 text-[13px] font-semibold uppercase tracking-wider text-muted-foreground">
               Admin
             </p>
-            <div className="rounded-2xl bg-card border border-border/60 overflow-hidden shadow-sm">
+            <div className="rounded-3xl ember-card overflow-hidden">
               <ListRow
                 icon={Users}
                 iconBg="bg-secondary/15"
@@ -108,7 +108,7 @@ export default function Account() {
         )}
 
         {/* Sign out */}
-        <div className="mt-6 rounded-2xl bg-card border border-border/60 overflow-hidden shadow-sm mb-32">
+        <div className="mt-6 rounded-3xl ember-card overflow-hidden mb-32">
           <ListRow
             icon={LogOut}
             iconBg="bg-destructive/10"

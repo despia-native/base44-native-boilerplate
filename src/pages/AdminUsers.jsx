@@ -65,7 +65,7 @@ export default function AdminUsers() {
   }
 
   return (
-    <div className="relative flex flex-col h-full bg-muted/40">
+    <div className="relative flex flex-col h-full bg-background">
       <GlassHeader
         title="Users"
         left={
@@ -93,7 +93,7 @@ export default function AdminUsers() {
 
         {!loading && <LoginsChart accounts={accounts} />}
 
-        <div className="rounded-2xl bg-card border border-border/60 overflow-hidden shadow-sm mb-6">
+        <div className="rounded-3xl ember-card overflow-hidden mb-6">
           {loading ? (
             <div className="flex items-center justify-center py-16 text-muted-foreground">
               <Loader2 className="w-5 h-5 animate-spin" />

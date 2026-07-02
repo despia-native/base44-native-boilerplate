@@ -31,7 +31,7 @@ export default function ResetPassword() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-muted/40">
+    <div className="flex flex-col h-full bg-background">
       {/* Top bar */}
       <header className="shrink-0 pt-safe-top bg-background/80 backdrop-blur-xl border-b border-border/60">
         <div className="h-11 flex items-center px-2">
@@ -56,21 +56,21 @@ export default function ResetPassword() {
           </p>
 
           {!done && !resetToken && (
-            <div className="mt-8 w-full rounded-2xl bg-card border border-border/60 shadow-sm px-4 py-4">
+            <div className="mt-8 w-full rounded-3xl ember-card px-4 py-4">
               <p className="text-[15px] text-destructive text-center">This reset link is invalid or missing its token.</p>
             </div>
           )}
 
           {!done && resetToken && (
             <form onSubmit={handleSubmit} className="mt-8 w-full flex flex-col gap-4">
-              <div className="rounded-2xl bg-card border border-border/60 overflow-hidden shadow-sm divide-y divide-border/60">
+              <div className="flex flex-col gap-3">
                 <input
                   type="password"
                   required
                   placeholder="New password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-transparent px-4 py-3.5 text-[15px] text-foreground placeholder:text-muted-foreground outline-none"
+                  className="ember-input"
                 />
                 <input
                   type="password"
@@ -78,14 +78,14 @@ export default function ResetPassword() {
                   placeholder="Confirm new password"
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
-                  className="w-full bg-transparent px-4 py-3.5 text-[15px] text-foreground placeholder:text-muted-foreground outline-none"
+                  className="ember-input"
                 />
               </div>
               {error && <p className="text-[13px] text-destructive px-1">{error}</p>}
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-full bg-primary text-primary-foreground px-4 py-3.5 text-[16px] font-semibold active:opacity-80 active:scale-[0.98] transition-all disabled:opacity-50 shadow-sm"
+                className="w-full h-14 rounded-full ember-primary text-[16px] font-bold active:scale-95 transition-transform disabled:opacity-40"
               >
                 {loading ? 'Updating…' : 'Update Password'}
               </button>

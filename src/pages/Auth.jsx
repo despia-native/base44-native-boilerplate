@@ -86,9 +86,9 @@ export default function Auth() {
   }, [navigate, checkUserAuth])
 
   return (
-    <div className="flex flex-col h-full items-center justify-center bg-muted/40 px-6 gap-6 pt-safe-top pb-safe-bottom">
+    <div className="flex flex-col h-full items-center justify-center bg-background px-6 gap-6 pt-safe-top pb-safe-bottom">
       <div className="flex flex-col items-center gap-4">
-        <div className="w-8 h-8 border-[3px] border-border border-t-foreground rounded-full animate-spin" />
+        <div className="w-8 h-8 border-[3px] border-border border-t-primary rounded-full animate-spin" />
         <p className="text-[15px] text-muted-foreground text-center">{status}</p>
       </div>
 
@@ -96,7 +96,7 @@ export default function Auth() {
         <button
           type="button"
           onClick={() => { window.location.href = '/' }}
-          className="w-full max-w-sm px-4 py-3.5 rounded-full bg-primary text-primary-foreground text-[16px] font-semibold active:opacity-80 active:scale-[0.98] transition-all shadow-sm"
+          className="w-full max-w-sm h-14 rounded-full ember-primary text-[16px] font-bold active:scale-95 transition-transform"
         >
           Continue to App
         </button>

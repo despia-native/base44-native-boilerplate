@@ -13,7 +13,7 @@ export default function Home() {
   const today = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })
 
   return (
-    <div className="relative flex flex-col h-full bg-muted/40">
+    <div className="relative flex flex-col h-full bg-background">
       <GlassHeader title="Home" />
 
       <div className="scroll-container px-5" style={{ paddingTop: 'calc(var(--safe-area-top, 0px) + 72px)' }}>
@@ -26,7 +26,7 @@ export default function Home() {
         </div>
 
         {/* Grouped list */}
-        <div className="rounded-2xl bg-card border border-border/60 overflow-hidden shadow-sm mb-32">
+        <div className="rounded-3xl ember-card overflow-hidden mb-32">
           <ListRow
             icon={UserCircle}
             iconBg="bg-primary/10"

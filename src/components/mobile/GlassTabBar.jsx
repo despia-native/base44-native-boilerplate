@@ -22,9 +22,10 @@ export default function GlassTabBar() {
               key={path}
               type="button"
               onClick={() => { if (!active) { haptics.light?.(); navigate(path) } }}
-              className={`flex items-center gap-2 rounded-full px-5 py-2.5 text-[13px] font-semibold transition-all active:scale-95 ${
+              aria-current={active ? 'page' : undefined}
+              className={`flex items-center gap-2 rounded-full px-5 py-2.5 text-[13px] font-bold transition-all active:scale-95 ${
                 active
-                  ? 'bg-primary text-primary-foreground shadow-md'
+                  ? 'ember-glass-hi text-primary'
                   : 'text-muted-foreground'
               }`}
             >
