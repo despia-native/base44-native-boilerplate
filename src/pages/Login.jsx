@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { ChevronLeft, Layers, Cloud, ShieldCheck, Mail } from 'lucide-react'
 import despia from 'despia-native'
 import { base44 } from '@/api/base44Client'
 import * as customAuth from '@/lib/customAuth'
@@ -7,10 +8,30 @@ import { signInWithDevice, isNative } from '@/lib/deviceAuth'
 import { haptics } from '@/lib/haptics'
 import { appConfig } from '@/config/app-config'
 import GoogleIcon from '@/components/GoogleIcon'
+import OnboardingCarousel from '@/components/onboarding/OnboardingCarousel'
 
 const isDespia = isNative()
 
+const SLIDES = [
+  {
+    icon: Layers,
+    title: 'Everything in one place',
+    body: 'Your account, your data, your settings — beautifully organized and always within reach.',
+  },
+  {
+    icon: Cloud,
+    title: 'Synced across devices',
+    body: 'Start on your phone, pick up anywhere. Your session follows you securely on every device.',
+  },
+  {
+    icon: ShieldCheck,
+    title: 'Private & secure',
+    body: 'Sign in with Google, email, or just your device. Your data stays yours — encrypted end to end.',
+  },
+]
+
 export default function Login() {
+  const [view, setView] = useState('onboarding') // 'onboarding' | 'email'
   const [mode, setMode] = useState('login') // 'login' | 'register'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -25,7 +46,7 @@ export default function Login() {
     let cancelled = false
     signInWithDevice()
       .then(() => { if (!cancelled) window.location.href = '/' })
-      .catch(() => { if (!cancelled) setAutoSignIn(false) }) // fall back to the normal form
+      .catch(() => { if (!cancelled) setAutoSignIn(false) }) // fall back to onboarding
     return () => { cancelled = true }
   }, [])
 
@@ -74,8 +95,6 @@ export default function Login() {
     }
   }
 
-  const inputClass = 'ember-input'
-
   if (autoSignIn) {
     return (
       <div className="flex flex-col h-full items-center justify-center bg-background px-6 gap-4 pt-safe-top pb-safe-bottom">
@@ -85,114 +104,141 @@ export default function Login() {
     )
   }
 
-  return (
-    <div className="flex flex-col h-full bg-background">
-      <div className="scroll-container flex flex-col items-center justify-center px-5 pt-safe-top pb-safe-bottom">
-        <div className="w-full max-w-sm flex flex-col items-center py-10">
-          {/* App mark + title */}
-          <div className="flex flex-col items-center gap-3 mb-8">
-            <div className="w-[72px] h-[72px] rounded-[22px] ember-accent flex items-center justify-center">
-              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                <path d="M2 17l10 5 10-5"/>
-                <path d="M2 12l10 5 10-5"/>
-              </svg>
-            </div>
-            <h1 className="text-[26px] font-bold tracking-tight text-foreground">
-              {mode === 'register' ? 'Create Account' : 'Welcome Back'}
-            </h1>
-            <p className="text-[15px] text-muted-foreground text-center -mt-1">
-              {mode === 'register' ? 'Sign up to get started' : 'Sign in to continue'}
-            </p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="w-full flex flex-col gap-4">
-            {/* Pill glass inputs */}
-            <div className="flex flex-col gap-3">
-              {mode === 'register' && (
-                <input
-                  type="text"
-                  placeholder="Full name"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className={inputClass}
-                />
-              )}
-              <input
-                type="email"
-                required
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className={inputClass}
-              />
-              <input
-                type="password"
-                required
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className={inputClass}
-              />
-            </div>
-
-            {error && <p className="text-[13px] text-destructive px-1">{error}</p>}
-
-            {mode === 'login' && (
-              <Link to="/forgot-password" className="text-[13px] text-primary self-end px-1 -mt-1">
-                Forgot password?
-              </Link>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full h-14 rounded-full ember-primary text-[16px] font-bold active:scale-95 transition-transform disabled:opacity-40"
-            >
-              {loading ? 'Please wait…' : mode === 'register' ? 'Create Account' : 'Sign In'}
-            </button>
-          </form>
-
-          <div className="w-full flex items-center gap-3 my-6">
-            <div className="flex-1 h-px bg-border/70" />
-            <span className="text-[12px] text-muted-foreground uppercase tracking-wide">or</span>
-            <div className="flex-1 h-px bg-border/70" />
-          </div>
-
-          <div className="w-full flex flex-col gap-3">
-            <button
-              onClick={handleGoogleSignIn}
-              className="w-full h-14 flex items-center justify-center gap-3 rounded-full ember-glass ember-press active:scale-95 transition-transform text-[16px] font-semibold text-foreground"
-            >
-              <GoogleIcon className="w-5 h-5" />
-              Continue with Google
-            </button>
-
-            {isDespia && (
-              <button
-                type="button"
-                onClick={handleFaceIdSignIn}
-                className="w-full h-14 flex items-center justify-center gap-3 rounded-full ember-glass ember-press active:scale-95 transition-transform text-[16px] font-semibold text-foreground"
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M4 8V6a2 2 0 0 1 2-2h2M4 16v2a2 2 0 0 0 2 2h2M16 4h2a2 2 0 0 1 2 2v2M16 20h2a2 2 0 0 0 2-2v-2" />
-                  <path d="M9 9h.01M15 9h.01M9.5 15a3.5 3.5 0 0 0 5 0M12 9v4" />
-                </svg>
-                Continue as guest with Face ID
-              </button>
-            )}
-          </div>
-
+  /* ── Email sign-in / register view ─────────────────────────── */
+  if (view === 'email') {
+    return (
+      <div className="flex flex-col h-full bg-background">
+        <div className="scroll-container flex flex-col px-5 pt-safe-top pb-safe-bottom">
           <button
             type="button"
-            onClick={() => { setMode(mode === 'register' ? 'login' : 'register'); setError('') }}
-            className="mt-8 text-[14px] text-muted-foreground"
+            onClick={() => { setView('onboarding'); setError('') }}
+            className="flex items-center text-primary text-[17px] active:opacity-60 self-start mt-4 -ml-1"
           >
-            {mode === 'register'
-              ? <>Already have an account? <span className="text-primary font-medium">Sign in</span></>
-              : <>Don't have an account? <span className="text-primary font-medium">Sign up</span></>}
+            <ChevronLeft className="w-6 h-6" /> Back
           </button>
+
+          <div className="w-full max-w-sm mx-auto flex flex-col items-center pt-8 pb-10">
+            <h1 className="text-[26px] font-bold tracking-tight text-foreground mb-1">
+              {mode === 'register' ? 'Create Account' : 'Welcome Back'}
+            </h1>
+            <p className="text-[15px] text-muted-foreground mb-8">
+              {mode === 'register' ? 'Sign up to get started' : 'Sign in to continue'}
+            </p>
+
+            <form onSubmit={handleSubmit} className="w-full flex flex-col gap-4">
+              <div className="flex flex-col gap-3">
+                {mode === 'register' && (
+                  <input
+                    type="text"
+                    placeholder="Full name"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    className="ember-input"
+                  />
+                )}
+                <input
+                  type="email"
+                  required
+                  placeholder="Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="ember-input"
+                />
+                <input
+                  type="password"
+                  required
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="ember-input"
+                />
+              </div>
+
+              {error && <p className="text-[13px] text-destructive px-1">{error}</p>}
+
+              {mode === 'login' && (
+                <Link to="/forgot-password" className="text-[13px] text-primary self-end px-1 -mt-1">
+                  Forgot password?
+                </Link>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full h-14 rounded-full ember-primary text-[16px] font-bold active:scale-95 transition-transform disabled:opacity-40"
+              >
+                {loading ? 'Please wait…' : mode === 'register' ? 'Create Account' : 'Sign In'}
+              </button>
+            </form>
+
+            <button
+              type="button"
+              onClick={() => { setMode(mode === 'register' ? 'login' : 'register'); setError('') }}
+              className="mt-8 text-[14px] text-muted-foreground"
+            >
+              {mode === 'register'
+                ? <>Already have an account? <span className="text-primary font-medium">Sign in</span></>
+                : <>Don't have an account? <span className="text-primary font-medium">Sign up</span></>}
+            </button>
+          </div>
         </div>
+      </div>
+    )
+  }
+
+  /* ── Onboarding view ────────────────────────────────────────── */
+  return (
+    <div className="flex flex-col h-full bg-background pt-safe-top pb-safe-bottom">
+      {/* App mark */}
+      <div className="flex justify-center pt-10">
+        <div className="w-16 h-16 rounded-[20px] ember-accent flex items-center justify-center">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+            <path d="M2 17l10 5 10-5"/>
+            <path d="M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+      </div>
+
+      {/* Value-prop carousel fills the middle */}
+      <div className="flex-1 flex items-center min-h-0">
+        <OnboardingCarousel slides={SLIDES} />
+      </div>
+
+      {/* Bottom CTA stack */}
+      <div className="w-full max-w-sm mx-auto px-5 pb-6 flex flex-col gap-3">
+        {error && <p className="text-[13px] text-destructive text-center">{error}</p>}
+
+        <button
+          onClick={handleGoogleSignIn}
+          className="w-full h-14 flex items-center justify-center gap-3 rounded-full ember-primary active:scale-95 transition-transform text-[16px] font-bold"
+        >
+          <GoogleIcon className="w-5 h-5" />
+          Continue with Google
+        </button>
+
+        <button
+          type="button"
+          onClick={() => { setView('email'); setError('') }}
+          className="w-full h-14 flex items-center justify-center gap-3 rounded-full ember-glass ember-press active:scale-95 transition-transform text-[16px] font-semibold text-foreground"
+        >
+          <Mail className="w-5 h-5" />
+          Continue with Email
+        </button>
+
+        {isDespia && (
+          <button
+            type="button"
+            onClick={handleFaceIdSignIn}
+            className="w-full h-12 text-[15px] font-medium text-muted-foreground active:opacity-60"
+          >
+            Continue as guest
+          </button>
+        )}
+
+        <p className="text-center text-[12px] text-muted-foreground/70 px-6 mt-1">
+          By continuing you agree to our Terms of Service and Privacy Policy.
+        </p>
       </div>
     </div>
   )
