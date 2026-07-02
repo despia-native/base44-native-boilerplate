@@ -24,14 +24,14 @@ One file holds every frontend setting:
 
 ```js
 export const appConfig = {
-  deeplinkScheme: 'myapp',      // ← your Despia scheme (no "://")
-  deeplinkPath: 'oauth/auth',   // ← usually leave as-is
+  deeplinkScheme: 'myapp',   // ← your Despia scheme (no "://")
+  deeplinkPath: 'auth',      // ← usually leave as-is (Despia adds "oauth/" itself)
 }
 ```
 
 Set `deeplinkScheme` to your app's scheme. `Login.jsx` reads this automatically — you don't touch any page code.
 
-> If you change `deeplinkPath`, also update the `/oauth/auth` route in `src/App.jsx` and the "Allowed path" in Despia. Most projects leave it alone.
+> ⚠️ Despia always prepends `oauth/`, so `deeplinkPath: 'auth'` produces the real deep link `<scheme>://oauth/auth`. If you change it, also update the `/oauth/auth` route in `src/App.jsx` and the "Allowed path" in Despia. Most projects leave it alone.
 
 ---
 
