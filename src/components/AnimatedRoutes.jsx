@@ -7,6 +7,7 @@ import Auth from '@/pages/Auth'
 import ForgotPassword from '@/pages/ForgotPassword'
 import ResetPassword from '@/pages/ResetPassword'
 import Home from '@/pages/Home'
+import Account from '@/pages/Account'
 import AdminUsers from '@/pages/AdminUsers'
 
 // iOS-style push transition: incoming view slides in from the right with a
@@ -32,6 +33,7 @@ export default function AnimatedRoutes() {
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
             <Route path="/" element={<Home />} />
+            <Route path="/account" element={<Account />} />
             <Route path="/admin/users" element={<AdminUsers />} />
           </Route>
           <Route path="*" element={<PageNotFound />} />
