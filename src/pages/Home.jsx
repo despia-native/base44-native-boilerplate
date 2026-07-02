@@ -1,8 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { Users, UserCircle } from 'lucide-react'
 import { useAuth } from '@/lib/AuthContext'
-import GlassHeader from '@/components/mobile/GlassHeader'
-import GlassTabBar from '@/components/mobile/GlassTabBar'
 import ListRow from '@/components/mobile/ListRow'
 
 export default function Home() {
@@ -14,8 +12,6 @@ export default function Home() {
 
   return (
     <div className="relative flex flex-col h-full bg-background">
-      <GlassHeader title="Home" />
-
       <div className="scroll-container px-5" style={{ paddingTop: 'calc(var(--safe-area-top, 0px) + 72px)' }}>
         {/* Large title */}
         <div className="pt-4 pb-8">
@@ -46,8 +42,6 @@ export default function Home() {
           )}
         </div>
       </div>
-
-      <GlassTabBar />
     </div>
   )
 }

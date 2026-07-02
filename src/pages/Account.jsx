@@ -1,8 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { Users, LogOut, ShieldCheck, Mail, BadgeCheck, UserPlus, ChevronRight } from 'lucide-react'
 import { useAuth } from '@/lib/AuthContext'
-import GlassHeader from '@/components/mobile/GlassHeader'
-import GlassTabBar from '@/components/mobile/GlassTabBar'
 import ListRow from '@/components/mobile/ListRow'
 
 export default function Account() {
@@ -12,8 +10,6 @@ export default function Account() {
 
   return (
     <div className="relative flex flex-col h-full bg-background">
-      <GlassHeader title="Account" />
-
       <div className="scroll-container px-5" style={{ paddingTop: 'calc(var(--safe-area-top, 0px) + 72px)' }}>
         {/* Profile hero */}
         <div className="flex flex-col items-center text-center pt-6 pb-6">
@@ -120,8 +116,6 @@ export default function Account() {
           />
         </div>
       </div>
-
-      <GlassTabBar />
     </div>
   )
 }

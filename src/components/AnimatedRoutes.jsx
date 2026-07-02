@@ -2,6 +2,8 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import PageNotFound from '@/lib/PageNotFound'
 import ProtectedRoute from '@/components/ProtectedRoute'
+import GlassHeader from '@/components/mobile/GlassHeader'
+import GlassTabBar from '@/components/mobile/GlassTabBar'
 import Login from '@/pages/Login'
 import Auth from '@/pages/Auth'
 import ForgotPassword from '@/pages/ForgotPassword'
@@ -15,8 +17,13 @@ import AdminUsers from '@/pages/AdminUsers'
 // gentle fade, outgoing view drifts left — using Apple's spring-like easing.
 export default function AnimatedRoutes() {
   const location = useLocation()
+  // Tab pages share persistent chrome rendered OUTSIDE the route animation,
+  // so the header and tab bar stay perfectly still while pages swipe under them.
+  const tabTitles = { '/': 'Home', '/account': 'Account' }
+  const tabPage = tabTitles[location.pathname]
 
   return (
+    <div className="relative flex-1 min-h-0 flex flex-col">
     <AnimatePresence mode="popLayout" initial={false}>
       <motion.div
         key={location.pathname}
@@ -42,5 +49,9 @@ export default function AnimatedRoutes() {
         </Routes>
       </motion.div>
     </AnimatePresence>
+
+    {tabPage && <GlassHeader title={tabPage} />}
+    {tabPage && <GlassTabBar />}
+    </div>
   )
 }
