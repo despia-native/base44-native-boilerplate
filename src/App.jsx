@@ -5,6 +5,7 @@ import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-d
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider } from '@/lib/AuthContext';
 import { ActionSheetProvider } from '@/lib/actionSheet';
+import AppFocusHandler from '@/components/AppFocusHandler';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import ScrollToTop from './components/ScrollToTop';
 import Login from '@/pages/Login';
@@ -19,6 +20,7 @@ function App() {
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
         <ActionSheetProvider>
+          <AppFocusHandler />
           <Router>
             <ScrollToTop />
             <Routes>
