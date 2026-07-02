@@ -11,7 +11,9 @@ module.exports = {
   		},
   		spacing: {
   			'safe-top': 'var(--safe-area-top, 0px)',
-  			'safe-bottom': 'var(--safe-area-bottom, 0px)'
+  			'safe-bottom': 'var(--safe-area-bottom, 0px)',
+  			'safe-left': 'var(--safe-area-left, 0px)',
+  			'safe-right': 'var(--safe-area-right, 0px)'
   		},
   		colors: {
   			background: 'hsl(var(--background))',

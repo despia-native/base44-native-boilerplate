@@ -5,9 +5,11 @@
 @layer base {
   :root {
     color-scheme: light;
-    /* Despia injects --safe-area-top/-bottom in the native shell; env() covers web preview. */
+    /* Despia injects --safe-area-* in the native shell; env() covers WebKit web preview, 0px otherwise. */
     --safe-area-top: env(safe-area-inset-top, 0px);
     --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-area-left: env(safe-area-inset-left, 0px);
+    --safe-area-right: env(safe-area-inset-right, 0px);
     --background: 0 0% 100%;
     --foreground: 0 0% 3.9%;
     --card: 0 0% 100%;
