@@ -1,41 +1,36 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Completing sign in...</title>
-  <style>
-    body { margin: 0; display: flex; align-items: center; justify-content: center;
-           min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-           background: #fff; color: #888; font-size: 14px; }
-  </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Signing you in…</title>
 </head>
-<body>
-  <p>Completing sign in...</p>
+<body style="margin:0;background:#0d0c10;color:#f4f2ee;font-family:-apple-system,sans-serif">
+  <p style="text-align:center;margin-top:45vh;font-size:15px">Signing you in…</p>
   <script>
-    (function () {
-      // OAuth providers (Google implicit flow, Apple fragment mode) return tokens
-      // in the URL hash. The deeplink scheme travels via `state`.
-      var query = new URLSearchParams(window.location.search)
-      var hash = new URLSearchParams(window.location.hash.substring(1))
+    // Google OAuth callback — authorization code flow.
+    // The one-time code arrives as a QUERY param (?code=...). We forward it to
+    // the app; the backend exchanges it for tokens using the client secret, so
+    // no access token ever appears in a URL.
+    var q = new URLSearchParams(location.search);
+    var code = q.get('code');
+    var error = q.get('error');
+    var scheme = q.get('state'); // the app's deep-link scheme travels via state
 
-      var scheme = hash.get('state') || query.get('state') || query.get('deeplink_scheme')
-      if (!scheme) { document.body.textContent = 'Missing deeplink scheme.'; return }
+    var params = new URLSearchParams();
+    if (code) params.set('code', code);
+    if (error) params.set('error', error);
+    var query = params.toString();
 
-      var accessToken = hash.get('access_token') // Google
-      var idToken = hash.get('id_token')         // Apple
-      var error = hash.get('error') || query.get('error')
-
-      // The oauth/ prefix is required — it tells Despia to close the tab and
-      // navigate the WebView to /auth with these params.
-      if (accessToken) {
-        window.location.href = scheme + '://oauth/auth?access_token=' + encodeURIComponent(accessToken)
-      } else if (idToken) {
-        window.location.href = scheme + '://oauth/auth?id_token=' + encodeURIComponent(idToken)
-      } else {
-        window.location.href = scheme + '://oauth/auth?error=' + encodeURIComponent(error || 'no_token')
-      }
-    })()
+    if (scheme && /^[a-z][a-z0-9+.-]*$/i.test(scheme)) {
+      // Native: bounce back into the app via its deep-link scheme.
+      location.href = scheme + '://auth?' + query;
+      // Web fallback: in a normal browser tab the custom scheme is a no-op,
+      // so after a moment continue to the in-app /auth page on this origin.
+      setTimeout(function () { location.replace('/auth?' + query); }, 1200);
+    } else {
+      location.replace('/auth?' + query);
+    }
   </script>
 </body>
 </html>

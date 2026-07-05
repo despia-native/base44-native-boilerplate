@@ -43,9 +43,10 @@ export async function login({ email, password }) {
   return data.account;
 }
 
-// Google: exchange the Google access token for our own JWT.
-export async function loginWithGoogleToken(google_token) {
-  const data = await invoke('googleSignIn', { google_token });
+// Google: exchange the one-time OAuth authorization code for our own JWT.
+// The code is single-use and useless without the server-held client secret.
+export async function loginWithGoogleCode(google_code) {
+  const data = await invoke('googleSignIn', { google_code });
   setToken(data.token);
   return data.account;
 }
@@ -65,8 +66,8 @@ export async function linkAccount({ email, password, full_name }) {
 }
 
 // Link an anonymous device account to a Google identity — keeps all account data.
-export async function linkWithGoogleToken(google_token) {
-  const data = await invoke('authLinkAccount', { google_token });
+export async function linkWithGoogleCode(google_code) {
+  const data = await invoke('authLinkAccount', { google_code });
   setToken(data.token);
   return data.account;
 }

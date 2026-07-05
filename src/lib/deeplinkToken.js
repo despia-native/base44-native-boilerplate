@@ -19,16 +19,17 @@ export function readFromUrl() {
     query.get('token') || query.get('access_token') ||
     hash.get('token') || hash.get('access_token')
   const idToken = query.get('id_token') || hash.get('id_token') // Apple
+  const code = query.get('code') || hash.get('code') // Google auth-code flow
   const error = query.get('error') || hash.get('error')
-  return { token: token || null, idToken: idToken || null, error: error || null }
+  return { token: token || null, idToken: idToken || null, code: code || null, error: error || null }
 }
 
 // Called once at startup, before React mounts. Stashes any incoming token and
 // strips it from the URL so it isn't left lying around.
 export function captureIncomingToken() {
-  const { token, idToken, error } = readFromUrl()
-  if (token || idToken || error) {
-    try { sessionStorage.setItem(KEY, JSON.stringify({ token, idToken, error })) } catch { /* ignore */ }
+  const { token, idToken, code, error } = readFromUrl()
+  if (token || idToken || code || error) {
+    try { sessionStorage.setItem(KEY, JSON.stringify({ token, idToken, code, error })) } catch { /* ignore */ }
     // Remove the sensitive params from the visible URL, keep the pathname.
     try {
       window.history.replaceState(null, '', window.location.pathname)
@@ -40,17 +41,17 @@ export function captureIncomingToken() {
 export function consumePendingToken() {
   try {
     const raw = sessionStorage.getItem(KEY)
-    if (!raw) return { token: null, idToken: null, error: null }
+    if (!raw) return { token: null, idToken: null, code: null, error: null }
     sessionStorage.removeItem(KEY)
     return JSON.parse(raw)
   } catch {
-    return { token: null, idToken: null, error: null }
+    return { token: null, idToken: null, code: null, error: null }
   }
 }
 
 // True if we have a token waiting (URL or stash) — used to route to /auth.
 export function hasPendingToken() {
   if (sessionStorage.getItem(KEY)) return true
-  const { token, idToken, error } = readFromUrl()
-  return !!(token || idToken || error)
+  const { token, idToken, code, error } = readFromUrl()
+  return !!(token || idToken || code || error)
 }

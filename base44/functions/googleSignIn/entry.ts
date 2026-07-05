@@ -1,5 +1,7 @@
-// Custom auth — Google sign-in.
-// Verifies the Google access token, finds/creates an Account, returns OUR own signed JWT.
+// Custom auth — Google sign-in (authorization code flow).
+// Exchanges the single-use Google auth code server-side (the client secret never
+// leaves the backend), reads the verified identity from the returned id_token,
+// finds/creates an Account, and returns OUR own signed JWT.
 // No Base44 auth involved — Accounts is our user DB.
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
@@ -16,6 +18,13 @@ async function signJwt(payload, secret, expiresInSec = 60 * 60 * 24 * 30) {
   const sig = await crypto.subtle.sign('HMAC', key, enc.encode(data));
   return `${data}.${b64url(sig)}`;
 }
+// Decode a JWT payload without signature verification — safe here because the
+// id_token arrives directly from Google's token endpoint over TLS, server-to-server.
+function decodeJwtPayload(jwt) {
+  let b64 = jwt.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+  while (b64.length % 4) b64 += '=';
+  return JSON.parse(atob(b64));
+}
 
 Deno.serve(async (req) => {
   try {
@@ -23,21 +32,31 @@ Deno.serve(async (req) => {
       return new Response(null, { status: 204, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, content-type' } });
     }
 
-    const { google_token } = await req.json();
-    if (!google_token) return Response.json({ error: 'google_token is required' }, { status: 400 });
+    const { google_code } = await req.json();
+    if (!google_code) return Response.json({ error: 'google_code is required' }, { status: 400 });
 
-    // Verify the Google token with Google's tokeninfo endpoint
-    const tokenInfoRes = await fetch(`https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=${google_token}`);
-    if (!tokenInfoRes.ok) return Response.json({ error: 'Invalid Google token' }, { status: 401 });
-
-    const tokenInfo = await tokenInfoRes.json();
-    if (!tokenInfo.email || tokenInfo.error_description) {
-      return Response.json({ error: tokenInfo.error_description || 'Token missing email scope' }, { status: 401 });
+    // Exchange the code for tokens. redirect_uri must exactly match the one used
+    // in googleAuthUrl and registered in Google Cloud Console.
+    const APP_BASE_URL = Deno.env.get('APP_BASE_URL') || 'https://despia-connect-go.base44.app';
+    const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        code: google_code,
+        client_id: Deno.env.get('GOOGLE_CLIENT_ID'),
+        client_secret: Deno.env.get('GOOGLE_CLIENT_SECRET'),
+        redirect_uri: `${APP_BASE_URL}/native-callback.html`,
+        grant_type: 'authorization_code',
+      }),
+    });
+    const tokenData = await tokenRes.json();
+    if (!tokenRes.ok || !tokenData.id_token) {
+      return Response.json({ error: tokenData.error_description || tokenData.error || 'Google code exchange failed' }, { status: 401 });
     }
 
-    // Critical: the token must be issued FOR THIS APP. Without this, any valid Google
-    // access token with email scope — including tokens minted by a different app the
-    // user authorized — would authenticate here. tokeninfo returns the client id in `aud`.
+    const tokenInfo = decodeJwtPayload(tokenData.id_token);
+    if (!tokenInfo.email) return Response.json({ error: 'Google account has no email' }, { status: 401 });
+    // The id_token must be issued FOR THIS APP.
     if (tokenInfo.aud !== Deno.env.get('GOOGLE_CLIENT_ID')) {
       return Response.json({ error: 'Token not issued for this app' }, { status: 401 });
     }

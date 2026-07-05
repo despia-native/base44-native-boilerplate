@@ -8,7 +8,7 @@ import { readFromUrl, consumePendingToken } from '@/lib/deeplinkToken'
 // React mounted) OR still be sitting in the live URL. Check both.
 function extractFromUrl() {
   const stashed = consumePendingToken()
-  if (stashed.token || stashed.idToken || stashed.error) return stashed
+  if (stashed.token || stashed.idToken || stashed.code || stashed.error) return stashed
   return readFromUrl()
 }
 
@@ -20,7 +20,7 @@ export default function Auth() {
   const handledRef = useRef(false)
 
   useEffect(() => {
-    const handleToken = ({ token, idToken }) => {
+    const handleToken = ({ code, idToken }) => {
       if (handledRef.current) return
       handledRef.current = true
       setStatus('Verifying your account...')
@@ -31,8 +31,8 @@ export default function Auth() {
       const authPromise = idToken
         ? customAuth.loginWithAppleToken(idToken) // Apple (Android deeplink flow)
         : linkMode
-          ? customAuth.linkWithGoogleToken(token)
-          : customAuth.loginWithGoogleToken(token)
+          ? customAuth.linkWithGoogleCode(code)
+          : customAuth.loginWithGoogleCode(code)
       authPromise
         .then(async () => {
           await checkUserAuth()
@@ -48,15 +48,15 @@ export default function Auth() {
 
     const tryExtract = () => {
       if (handledRef.current) return true
-      const { token, idToken, error } = extractFromUrl()
+      const { idToken, code, error } = extractFromUrl()
       if (error) {
         handledRef.current = true
         setStatus('Sign-in error: ' + error)
         setTimeout(() => navigate('/login'), 3000)
         return true
       }
-      if (token || idToken) {
-        handleToken({ token, idToken })
+      if (code || idToken) {
+        handleToken({ code, idToken })
         return true
       }
       return false

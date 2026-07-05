@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
     const url = 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams({
       client_id: clientId,
       redirect_uri: redirectUri,
-      response_type: 'token',
+      response_type: 'code',
       scope: 'openid email profile',
       // deeplink_scheme travels via state so the redirect URI stays clean
       state: deeplink_scheme,

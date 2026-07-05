@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
       return new Response(null, { status: 204, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, content-type' } });
     }
 
-    const { token, email, password, full_name, google_token } = await req.json();
+    const { token, email, password, full_name, google_code } = await req.json();
     if (!token) return Response.json({ error: 'Not signed in' }, { status: 401 });
 
     const secret = Deno.env.get('JWT_SECRET');
@@ -70,14 +70,30 @@ Deno.serve(async (req) => {
 
     let updates;
 
-    if (google_token) {
-      // ── Link with Google ──────────────────────────────────────────────────
-      const tokenInfoRes = await fetch(`https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=${google_token}`);
-      if (!tokenInfoRes.ok) return Response.json({ error: 'Invalid Google token' }, { status: 401 });
-      const tokenInfo = await tokenInfoRes.json();
-      if (!tokenInfo.email || tokenInfo.error_description) {
-        return Response.json({ error: tokenInfo.error_description || 'Token missing email scope' }, { status: 401 });
+    if (google_code) {
+      // ── Link with Google (authorization code flow) ────────────────────────
+      // Exchange the single-use code server-side; identity comes from the
+      // id_token, which arrives directly from Google over TLS (trusted as-is).
+      const APP_BASE_URL = Deno.env.get('APP_BASE_URL') || 'https://despia-connect-go.base44.app';
+      const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          code: google_code,
+          client_id: Deno.env.get('GOOGLE_CLIENT_ID'),
+          client_secret: Deno.env.get('GOOGLE_CLIENT_SECRET'),
+          redirect_uri: `${APP_BASE_URL}/native-callback.html`,
+          grant_type: 'authorization_code',
+        }),
+      });
+      const tokenData = await tokenRes.json();
+      if (!tokenRes.ok || !tokenData.id_token) {
+        return Response.json({ error: tokenData.error_description || tokenData.error || 'Google code exchange failed' }, { status: 401 });
       }
+      let payloadB64 = tokenData.id_token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+      while (payloadB64.length % 4) payloadB64 += '=';
+      const tokenInfo = JSON.parse(atob(payloadB64));
+      if (!tokenInfo.email) return Response.json({ error: 'Google account has no email' }, { status: 401 });
       if (tokenInfo.aud !== Deno.env.get('GOOGLE_CLIENT_ID')) {
         return Response.json({ error: 'Token not issued for this app' }, { status: 401 });
       }
