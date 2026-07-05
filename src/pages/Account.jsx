@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { Users, LogOut, ShieldCheck, Mail, BadgeCheck, UserPlus, ChevronRight } from 'lucide-react'
+import { Users, LogOut, ShieldCheck, Mail, BadgeCheck, UserPlus, ChevronRight, Bell, Bug } from 'lucide-react'
 import { useAuth } from '@/lib/AuthContext'
 import ListRow from '@/components/mobile/ListRow'
 import PremiumSection from '@/components/premium/PremiumSection'
@@ -103,9 +103,27 @@ export default function Account() {
                 onClick={() => navigate('/admin/users')}
                 first
               />
+              <ListRow
+                icon={Bell}
+                iconBg="bg-primary/10"
+                iconColor="text-primary"
+                label="Push notifications"
+                onClick={() => navigate('/admin/push')}
+              />
             </div>
           </>
         )}
+
+        {/* Developer tools */}
+        <div className="mt-6 rounded-3xl ember-card overflow-hidden">
+          <ListRow
+            icon={Bug}
+            iconBg="bg-muted"
+            label="Push debug"
+            onClick={() => navigate('/debug')}
+            first
+          />
+        </div>
 
         {/* Sign out */}
         <div className="mt-6 rounded-3xl ember-card overflow-hidden mb-32">

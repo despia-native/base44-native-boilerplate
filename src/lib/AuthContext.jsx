@@ -2,6 +2,7 @@ import React, { createContext, useState, useContext, useEffect, useCallback } fr
 import { base44 } from '@/api/base44Client';
 import * as customAuth from '@/lib/customAuth';
 import { useFocusEvents } from '@/hooks/useFocusEvents';
+import { linkPushUser } from '@/lib/push';
 
 const AuthContext = createContext();
 
@@ -18,6 +19,7 @@ export const AuthProvider = ({ children }) => {
     if (account) {
       setUser(account);
       setIsAuthenticated(true);
+      linkPushUser(account.id); // link this device to the user for push targeting
     } else {
       setUser(null);
       setIsAuthenticated(false);

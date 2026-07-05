@@ -12,6 +12,8 @@ import Home from '@/pages/Home'
 import Account from '@/pages/Account'
 import LinkAccount from '@/pages/LinkAccount'
 import AdminUsers from '@/pages/AdminUsers'
+import AdminPush from '@/pages/AdminPush'
+import Debug from '@/pages/Debug'
 
 // iOS-style push transition: incoming view slides in from the right with a
 // gentle fade, outgoing view drifts left — using Apple's spring-like easing.
@@ -44,6 +46,8 @@ export default function AnimatedRoutes() {
             <Route path="/account" element={<Account />} />
             <Route path="/link-account" element={<LinkAccount />} />
             <Route path="/admin/users" element={<AdminUsers />} />
+            <Route path="/admin/push" element={<AdminPush />} />
+            <Route path="/debug" element={<Debug />} />
           </Route>
           <Route path="*" element={<PageNotFound />} />
         </Routes>
