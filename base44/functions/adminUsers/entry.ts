@@ -57,6 +57,10 @@ Deno.serve(async (req) => {
         email_verified: a.email_verified,
         last_login_at: a.last_login_at,
         created_date: a.created_date,
+        is_anonymous: !!a.is_anonymous,
+        has_google: !!a.google_id,
+        has_apple: !!a.apple_id,
+        has_password: !!a.password_hash,
       }));
       return Response.json({ accounts: safe });
     }

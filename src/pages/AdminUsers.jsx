@@ -5,11 +5,14 @@ import { useAuth } from '@/lib/AuthContext'
 import GlassHeader from '@/components/mobile/GlassHeader'
 import * as adminApi from '@/lib/adminUsers'
 import UserRow from '@/components/admin/UserRow'
+import UserStats from '@/components/admin/UserStats'
 import LoginsChart from '@/components/admin/LoginsChart'
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000
 
 export default function AdminUsers() {
   const { user, isLoadingAuth } = useAuth()
@@ -17,6 +20,7 @@ export default function AdminUsers() {
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
+  const [filter, setFilter] = useState('all') // 'all' | 'active' | 'new'
 
   const load = async () => {
     setLoading(true)
@@ -64,6 +68,12 @@ export default function AdminUsers() {
     URL.revokeObjectURL(url)
   }
 
+  // Signup dashboard buckets
+  const weekAgo = Date.now() - WEEK_MS
+  const isActive = (a) => a.last_login_at && new Date(a.last_login_at).getTime() >= weekAgo
+  const isNew = (a) => a.created_date && new Date(a.created_date).getTime() >= weekAgo
+  const shown = filter === 'active' ? accounts.filter(isActive) : filter === 'new' ? accounts.filter(isNew) : accounts
+
   return (
     <div className="relative flex flex-col h-full bg-background">
       <GlassHeader
@@ -91,17 +101,43 @@ export default function AdminUsers() {
           {accounts.length} account{accounts.length === 1 ? '' : 's'}
         </p>
 
-        {!loading && <LoginsChart accounts={accounts} />}
+        {!loading && (
+          <>
+            <UserStats
+              total={accounts.length}
+              active={accounts.filter(isActive).length}
+              fresh={accounts.filter(isNew).length}
+            />
+            <LoginsChart accounts={accounts} />
+
+            <div className="flex gap-2 mb-3">
+              {[['all', 'All'], ['active', 'Active 7d'], ['new', 'New 7d']].map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setFilter(value)}
+                  className={`h-9 px-4 rounded-full text-[13px] font-semibold transition-colors ${
+                    filter === value ? 'ember-primary' : 'ember-glass ember-press text-foreground'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
 
         <div className="rounded-3xl ember-card overflow-hidden mb-6">
           {loading ? (
             <div className="flex items-center justify-center py-16 text-muted-foreground">
               <Loader2 className="w-5 h-5 animate-spin" />
             </div>
-          ) : accounts.length === 0 ? (
-            <p className="text-center text-[15px] text-muted-foreground py-16">No accounts yet.</p>
+          ) : shown.length === 0 ? (
+            <p className="text-center text-[15px] text-muted-foreground py-16">
+              {accounts.length === 0 ? 'No accounts yet.' : 'No accounts match this filter.'}
+            </p>
           ) : (
-            accounts.map((a) => (
+            shown.map((a) => (
               <UserRow
                 key={a.id}
                 account={a}

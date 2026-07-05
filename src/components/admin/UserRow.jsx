@@ -1,7 +1,9 @@
-import { Shield, Trash2, User as UserIcon } from 'lucide-react'
+import { Shield, Trash2, User as UserIcon, BadgeCheck } from 'lucide-react'
+import { format, formatDistanceToNow } from 'date-fns'
 
 export default function UserRow({ account, isSelf, onToggleRole, onDelete, busy }) {
   const isAdmin = account.role === 'admin'
+  const method = account.is_anonymous ? 'Guest' : account.has_google ? 'Google' : account.has_apple ? 'Apple' : 'Email'
   return (
     <div className="flex items-center gap-3 py-3 px-4 border-b border-border/60 last:border-0">
       {account.avatar_url ? (
@@ -13,11 +15,17 @@ export default function UserRow({ account, isSelf, onToggleRole, onDelete, busy 
       )}
 
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <span className="text-[15px] font-medium text-foreground truncate">{account.full_name || '—'}</span>
+          {account.email_verified && <BadgeCheck className="w-3.5 h-3.5 text-primary shrink-0" />}
           {isSelf && <span className="text-[11px] text-muted-foreground">(you)</span>}
         </div>
         <p className="text-[13px] text-muted-foreground truncate">{account.email}</p>
+        <p className="text-[11px] text-muted-foreground/80 truncate">
+          {method}
+          {account.created_date && <> · Joined {format(new Date(account.created_date), 'MMM d, yyyy')}</>}
+          {account.last_login_at && <> · Seen {formatDistanceToNow(new Date(account.last_login_at), { addSuffix: true })}</>}
+        </p>
       </div>
 
       <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium shrink-0 ${
