@@ -77,7 +77,7 @@ export default function DeleteAccountDrawer({ open, onOpenChange, account, onDel
               : step2Text}
           </p>
 
-          {error && <p className="text-[13px] text-destructive text-center">{error}</p>}
+          {error && <p role="alert" className="text-[13px] text-destructive text-center">{error}</p>}
 
           {step === 1 ? (
             <>

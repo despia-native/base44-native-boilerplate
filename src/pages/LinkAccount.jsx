@@ -70,6 +70,8 @@ export default function LinkAccount() {
             <div className="flex flex-col gap-3">
               <input
                 type="text"
+                aria-label="Full name"
+                autoComplete="name"
                 placeholder="Full name"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
@@ -78,6 +80,9 @@ export default function LinkAccount() {
               <input
                 type="email"
                 required
+                aria-label="Email"
+                autoComplete="email"
+                inputMode="email"
                 placeholder="Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -86,6 +91,8 @@ export default function LinkAccount() {
               <input
                 type="password"
                 required
+                aria-label="Password, minimum 8 characters"
+                autoComplete="new-password"
                 placeholder="Password (min. 8 characters)"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -93,7 +100,7 @@ export default function LinkAccount() {
               />
             </div>
 
-            {error && <p className="text-[13px] text-destructive px-1">{error}</p>}
+            {error && <p role="alert" className="text-[13px] text-destructive px-1">{error}</p>}
 
             <button
               type="submit"

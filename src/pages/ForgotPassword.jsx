@@ -39,7 +39,7 @@ export default function ForgotPassword() {
           </p>
 
           {sent ? (
-            <div className="mt-8 w-full rounded-3xl ember-card px-4 py-4">
+            <div role="status" className="mt-8 w-full rounded-3xl ember-card px-4 py-4">
               <p className="text-[15px] text-muted-foreground text-center">
                 If an account exists for <span className="font-medium text-foreground">{email}</span>, a reset link is on its way. The link expires in 30 minutes.
               </p>
@@ -49,6 +49,9 @@ export default function ForgotPassword() {
               <input
                 type="email"
                 required
+                aria-label="Email"
+                autoComplete="email"
+                inputMode="email"
                 placeholder="Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}

@@ -51,13 +51,13 @@ export default function ResetPassword() {
           <h1 className="text-[24px] font-bold tracking-tight text-foreground text-center">
             {done ? 'Password Updated' : 'New Password'}
           </h1>
-          <p className="mt-2 text-[15px] text-muted-foreground text-center">
+          <p role={done ? 'status' : undefined} className="mt-2 text-[15px] text-muted-foreground text-center">
             {done ? 'Redirecting you to sign in…' : 'Choose a new password for your account.'}
           </p>
 
           {!done && !resetToken && (
             <div className="mt-8 w-full rounded-3xl ember-card px-4 py-4">
-              <p className="text-[15px] text-destructive text-center">This reset link is invalid or missing its token.</p>
+              <p role="alert" className="text-[15px] text-destructive text-center">This reset link is invalid or missing its token.</p>
             </div>
           )}
 
@@ -67,6 +67,8 @@ export default function ResetPassword() {
                 <input
                   type="password"
                   required
+                  aria-label="New password"
+                  autoComplete="new-password"
                   placeholder="New password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -75,13 +77,15 @@ export default function ResetPassword() {
                 <input
                   type="password"
                   required
+                  aria-label="Confirm new password"
+                  autoComplete="new-password"
                   placeholder="Confirm new password"
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
                   className="ember-input"
                 />
               </div>
-              {error && <p className="text-[13px] text-destructive px-1">{error}</p>}
+              {error && <p role="alert" className="text-[13px] text-destructive px-1">{error}</p>}
               <button
                 type="submit"
                 disabled={loading}

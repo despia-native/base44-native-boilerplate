@@ -134,8 +134,8 @@ export default function Login() {
 
   if (autoSignIn) {
     return (
-      <div className="flex flex-col h-full items-center justify-center bg-background px-6 gap-4 pt-safe-top pb-safe-bottom">
-        <div className="w-8 h-8 border-[3px] border-border border-t-primary rounded-full animate-spin" />
+      <div role="status" aria-live="polite" className="flex flex-col h-full items-center justify-center bg-background px-6 gap-4 pt-safe-top pb-safe-bottom">
+        <div aria-hidden="true" className="w-8 h-8 border-[3px] border-border border-t-primary rounded-full animate-spin" />
         <p className="text-[15px] text-muted-foreground">Setting up your session…</p>
       </div>
     )
@@ -151,7 +151,7 @@ export default function Login() {
 
       {/* Bottom CTA stack */}
       <div className="w-full max-w-sm md:max-w-md mx-auto px-5 pb-6 flex flex-col gap-3">
-        {error && <p className="text-[13px] text-destructive text-center">{error}</p>}
+        {error && <p role="alert" className="text-[13px] text-destructive text-center">{error}</p>}
 
         {!accountsLoaded ? (
           /* Placeholder keeps the layout stable while the saved-account list loads */

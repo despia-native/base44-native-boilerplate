@@ -35,7 +35,7 @@ export default function GlassTabBar() {
   }, [pathname])
 
   return (
-    <nav className="absolute bottom-0 inset-x-0 z-30 pb-safe-bottom flex justify-center pointer-events-none">
+    <nav aria-label="Main menu" className="absolute bottom-0 inset-x-0 z-30 pb-safe-bottom flex justify-center pointer-events-none">
       <div className="relative mb-3 rounded-full liquid-glass flex items-center gap-1 p-1.5 pointer-events-auto">
         {/* Gliding selection pill — no overshoot so it never flies past edge tabs */}
         {thumb && activeIndex !== -1 && (

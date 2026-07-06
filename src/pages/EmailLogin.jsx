@@ -63,6 +63,8 @@ export default function EmailLogin() {
               {mode === 'register' && (
                 <input
                   type="text"
+                  aria-label="Full name"
+                  autoComplete="name"
                   placeholder="Full name"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
@@ -72,6 +74,9 @@ export default function EmailLogin() {
               <input
                 type="email"
                 required
+                aria-label="Email"
+                autoComplete="email"
+                inputMode="email"
                 placeholder="Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -80,6 +85,8 @@ export default function EmailLogin() {
               <input
                 type="password"
                 required
+                aria-label="Password"
+                autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -87,7 +94,7 @@ export default function EmailLogin() {
               />
             </div>
 
-            {error && <p className="text-[13px] text-destructive px-1">{error}</p>}
+            {error && <p role="alert" className="text-[13px] text-destructive px-1">{error}</p>}
 
             {mode === 'login' && (
               <Link to="/forgot-password" className="text-[13px] text-primary self-end px-1 -mt-1">

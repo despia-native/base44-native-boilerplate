@@ -11,7 +11,7 @@ export default function DeleteConfirmStep({ native, busy, onBiometric, onTypeCon
   if (native) {
     return (
       <button type="button" disabled={busy} onClick={onBiometric} className={dangerBtn}>
-        {busy ? <span className="ember-spinner" /> : <><Fingerprint className="w-5 h-5" /> Confirm with biometrics</>}
+        {busy ? <><span className="ember-spinner" aria-hidden="true" /><span className="sr-only">Deleting account…</span></> : <><Fingerprint className="w-5 h-5" aria-hidden="true" /> Confirm with biometrics</>}
       </button>
     )
   }
@@ -21,13 +21,14 @@ export default function DeleteConfirmStep({ native, busy, onBiometric, onTypeCon
         type="text"
         required
         autoComplete="off"
+        aria-label="Type DELETE ACCOUNT to confirm"
         placeholder="Type DELETE ACCOUNT to confirm"
         value={confirmText}
         onChange={(e) => setConfirmText(e.target.value)}
         className="ember-input"
       />
       <button type="submit" disabled={busy || confirmText.trim().toUpperCase() !== 'DELETE ACCOUNT'} className={dangerBtn}>
-        {busy ? <span className="ember-spinner" /> : 'Permanently delete'}
+        {busy ? <><span className="ember-spinner" aria-hidden="true" /><span className="sr-only">Deleting account…</span></> : 'Permanently delete'}
       </button>
     </form>
   )

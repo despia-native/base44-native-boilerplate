@@ -28,6 +28,15 @@ and the new-screen checklist. Only design tokens and ember materials — never
 hardcoded colors, hover-only feedback, browser dialogs, or unwrapped
 full-width layouts on tablet.
 
+## Accessibility (read before adding any UI)
+
+**Read `ACCESSIBILITY.md`** before creating or editing any screen/component.
+Summary: real `<button>`/`<a>`/`<input>` elements only; every input gets an
+`aria-label` + correct `autoComplete`/`inputMode`; icon-only controls get
+`aria-label`s; errors use `role="alert"`, async/loading states `role="status"`;
+targets ≥44pt; keep the global `:focus-visible` ring; every gesture has a
+button alternative. Target: WCAG 2.1 AA with VoiceOver/TalkBack.
+
 ## Animation & WebView Performance (read before adding any animation)
 
 **Read `DOM_OPTIMIZATION.md`** before writing any animated or gesture-driven

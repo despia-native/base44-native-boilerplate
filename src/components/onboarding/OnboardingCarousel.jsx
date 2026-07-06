@@ -28,6 +28,9 @@ export default function OnboardingCarousel({ slides }) {
       <div
         ref={trackRef}
         onScroll={handleScroll}
+        role="group"
+        aria-roledescription="carousel"
+        aria-label="App introduction"
         className="flex overflow-x-auto overflow-y-hidden snap-x snap-mandatory [&::-webkit-scrollbar]:hidden"
         style={{
           scrollbarWidth: 'none',
@@ -38,7 +41,13 @@ export default function OnboardingCarousel({ slides }) {
         }}
       >
         {slides.map((slide, i) => (
-          <div key={i} className="w-full flex-shrink-0 snap-center flex flex-col items-center px-8 text-center">
+          <div
+            key={i}
+            role="group"
+            aria-roledescription="slide"
+            aria-label={`${i + 1} of ${slides.length}`}
+            className="w-full flex-shrink-0 snap-center flex flex-col items-center px-8 text-center"
+          >
             <div className="w-24 h-24 rounded-[28px] ember-glass-hi flex items-center justify-center mb-7">
               <slide.icon className="w-11 h-11 text-primary" strokeWidth={1.8} />
             </div>
@@ -52,17 +61,15 @@ export default function OnboardingCarousel({ slides }) {
         ))}
       </div>
 
-      {/* Page dots */}
-      <div className="flex items-center justify-center gap-2 mt-7" role="tablist" aria-label="Onboarding pages">
+      {/* Page dots — decorative; the current slide is announced via the live region below */}
+      <div className="flex items-center justify-center gap-2 mt-7" aria-hidden="true">
         {slides.map((_, i) => (
-          <div
-            key={i}
-            role="tab"
-            aria-selected={i === active}
-            className={`ember-dot ${i === active ? 'on' : ''}`}
-          />
+          <div key={i} className={`ember-dot ${i === active ? 'on' : ''}`} />
         ))}
       </div>
+      <p className="sr-only" aria-live="polite">
+        Slide {active + 1} of {slides.length}: {slides[active]?.title}
+      </p>
     </div>
   )
 }
