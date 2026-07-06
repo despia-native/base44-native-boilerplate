@@ -27,13 +27,18 @@ export default function ListRow({
     </>
   )
 
-  const base = `flex items-center gap-3 w-full px-4 py-3 active:bg-muted/60 transition-colors ${
+  const base = `flex items-center gap-3 w-full px-4 py-3 ${
     first ? '' : 'border-t border-border/60'
   }`
 
   if (onClick) {
+    // Kit .cell press: spring scale + background highlight (no hover — press is the highlight)
     return (
-      <button type="button" onClick={onClick} className={base}>
+      <button
+        type="button"
+        onClick={onClick}
+        className={`${base} active:bg-muted/60 transition-[transform,background-color] duration-300 [transition-timing-function:var(--spring)] active:scale-[.98]`}
+      >
         {content}
       </button>
     )
