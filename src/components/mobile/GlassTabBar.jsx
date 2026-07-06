@@ -1,12 +1,10 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Home, UserCircle } from 'lucide-react'
 import { haptics } from '@/lib/haptics'
+import { TABS } from '@/config/navigation'
 
-const tabs = [
-  { path: '/', label: 'Home', icon: Home },
-  { path: '/account', label: 'Account', icon: UserCircle },
-]
+// Menu items come from src/config/navigation.js — edit TABS there to change the menu.
+const tabs = TABS.map(({ path, title, icon }) => ({ path, label: title, icon }))
 
 // iOS 26-style floating liquid-glass tab bar capsule with a gliding
 // selection pill (kit .tabbar): the hi-glass thumb translates + resizes
