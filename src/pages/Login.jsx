@@ -13,6 +13,7 @@ import { appConfig } from '@/config/app-config'
 import GoogleIcon from '@/components/GoogleIcon'
 import OnboardingCarousel from '@/components/onboarding/OnboardingCarousel'
 import SavedAccountRow from '@/components/onboarding/SavedAccountRow'
+import SavedAccountCard from '@/components/onboarding/SavedAccountCard'
 import AccountPickerDrawer from '@/components/onboarding/AccountPickerDrawer'
 import { loadSavedAccounts, removeSavedAccount } from '@/lib/savedAccounts'
 
@@ -48,6 +49,9 @@ export default function Login() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [savedAccounts, setSavedAccounts] = useState([])
+  // Prevents the sign-in buttons flashing before we know whether a saved
+  // account exists — the CTA area stays empty until the list has loaded.
+  const [accountsLoaded, setAccountsLoaded] = useState(false)
   // SESSION MODEL: on native the app is ALWAYS usable — either logged in with a
   // real account (email/Google/Apple) or automatically as the device guest.
   // Guest is never an explicit choice, so auto sign-in always runs on native.
@@ -61,7 +65,10 @@ export default function Login() {
 
   useEffect(() => {
     // Guests never appear in the account picker — guest mode is automatic, not a choice.
-    loadSavedAccounts().then((list) => setSavedAccounts(list.filter((a) => !a.is_anonymous)))
+    loadSavedAccounts().then((list) => {
+      setSavedAccounts(list.filter((a) => !a.is_anonymous))
+      setAccountsLoaded(true)
+    })
     if (!isDespia) return
     let cancelled = false
     const signedOut = customAuth.wasSignedOut()
@@ -255,16 +262,20 @@ export default function Login() {
       <div className="w-full max-w-sm mx-auto px-5 pb-6 flex flex-col gap-3">
         {error && <p className="text-[13px] text-destructive text-center">{error}</p>}
 
-        {savedAccounts.length > 0 ? (
+        {!accountsLoaded ? (
+          /* Placeholder keeps the layout stable while the saved-account list loads */
+          <div className="h-14" />
+        ) : savedAccounts.length > 0 ? (
           <>
-            {/* Device already has account(s) — iOS pattern: continue with the
-                most recent one, or open the switcher drawer. */}
+            {/* Device already has account(s) — iOS pattern: show WHO is continuing
+                (avatar + name + email), then one-tap re-entry or the switcher. */}
+            <SavedAccountCard account={savedAccounts[0]} />
             <button
               type="button"
               onClick={() => handleSavedAccount(savedAccounts[0])}
-              className="w-full h-14 rounded-full ember-primary active:scale-95 transition-transform text-[16px] font-bold px-6 truncate"
+              className="w-full h-14 rounded-full ember-primary active:scale-95 transition-transform text-[16px] font-bold px-6"
             >
-              Continue as {savedAccounts[0].full_name || savedAccounts[0].email}
+              Continue to account
             </button>
             <button
               type="button"
