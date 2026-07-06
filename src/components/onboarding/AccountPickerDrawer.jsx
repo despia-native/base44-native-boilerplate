@@ -14,9 +14,9 @@ export default function AccountPickerDrawer({
   const option = 'w-full h-13 min-h-[52px] flex items-center justify-center gap-3 rounded-full ember-glass ember-press active:scale-95 transition-transform text-[15px] font-semibold text-foreground'
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="bg-background">
-        <DrawerHeader className="pb-1">
-          <DrawerTitle className="text-[17px]">Choose an account</DrawerTitle>
+      <DrawerContent>
+        <DrawerHeader className="pb-1 pt-3">
+          <DrawerTitle className="text-[17px] font-semibold text-center">Choose an account</DrawerTitle>
         </DrawerHeader>
         <div className="px-4 pt-2 flex flex-col gap-3" style={{ paddingBottom: 'calc(var(--safe-area-bottom, 0px) + 20px)' }}>
           {savedAccounts.length > 0 && (
