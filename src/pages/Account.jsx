@@ -125,18 +125,23 @@ export default function Account() {
           />
         </div>
 
-        {/* Sign out */}
-        <div className="mt-6 rounded-3xl ember-card overflow-hidden mb-32">
-          <ListRow
-            icon={LogOut}
-            iconBg="bg-destructive/10"
-            label="Sign out"
-            danger
-            showChevron={false}
-            onClick={() => logout()}
-            first
-          />
-        </div>
+        {/* Sign out — only for REAL accounts. A guest (anonymous device account
+            never linked to email/Google/Apple) IS the logged-out state; signing
+            it out is meaningless and would just recreate the same session. */}
+        {!user?.is_anonymous && (
+          <div className="mt-6 rounded-3xl ember-card overflow-hidden">
+            <ListRow
+              icon={LogOut}
+              iconBg="bg-destructive/10"
+              label="Sign out"
+              danger
+              showChevron={false}
+              onClick={() => logout()}
+              first
+            />
+          </div>
+        )}
+        <div className="h-32" />
       </div>
     </div>
   )

@@ -48,9 +48,10 @@ export default function Login() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [savedAccounts, setSavedAccounts] = useState([])
-  // Loginless native flow: auto sign-in as a device-backed guest — skipped after
-  // an explicit sign-out (iOS behavior: show the account picker instead).
-  const [autoSignIn, setAutoSignIn] = useState(isDespia && !customAuth.wasSignedOut())
+  // SESSION MODEL: on native the app is ALWAYS usable — either logged in with a
+  // real account (email/Google/Apple) or automatically as the device guest.
+  // Guest is never an explicit choice, so auto sign-in always runs on native.
+  const [autoSignIn, setAutoSignIn] = useState(isDespia)
 
   // SPA entry into the app — refresh auth state, then soft-navigate (no reload).
   const enterApp = async () => {
@@ -59,11 +60,25 @@ export default function Login() {
   }
 
   useEffect(() => {
-    loadSavedAccounts().then(setSavedAccounts)
-    if (!isDespia || customAuth.wasSignedOut()) return
+    // Guests never appear in the account picker — guest mode is automatic, not a choice.
+    loadSavedAccounts().then((list) => setSavedAccounts(list.filter((a) => !a.is_anonymous)))
+    if (!isDespia) return
     let cancelled = false
+    const signedOut = customAuth.wasSignedOut()
     signInWithDevice()
-      .then(() => { if (!cancelled) enterApp() })
+      .then((account) => {
+        if (cancelled) return
+        if (signedOut && !account.is_anonymous) {
+          // The device account was LINKED to the very account the user just signed
+          // out of — restoring it would silently undo the sign-out. Stay here and
+          // let them pick an account explicitly.
+          customAuth.logout()
+          setAutoSignIn(false)
+          return
+        }
+        // Distinct guest account (or no explicit sign-out) — enter as guest.
+        enterApp()
+      })
       .catch(() => { if (!cancelled) setAutoSignIn(false) }) // fall back to onboarding
     return () => { cancelled = true }
   }, [])
@@ -88,18 +103,6 @@ export default function Login() {
   const handleRemoveSaved = (id) => {
     removeSavedAccount(id)
     setSavedAccounts((list) => list.filter((a) => a.id !== id))
-  }
-
-  const handleFaceIdSignIn = async () => {
-    setError('')
-    setAutoSignIn(true)
-    try {
-      await signInWithDevice({ biometric: true })
-      await enterApp()
-    } catch (err) {
-      setAutoSignIn(false)
-      setError(err?.response?.data?.error || err?.message || 'Face ID sign-in failed')
-    }
   }
 
   const handleGoogleSignIn = async () => {
@@ -261,7 +264,7 @@ export default function Login() {
               onClick={() => handleSavedAccount(savedAccounts[0])}
               className="w-full h-14 rounded-full ember-primary active:scale-95 transition-transform text-[16px] font-bold px-6 truncate"
             >
-              Continue as {savedAccounts[0].is_anonymous ? 'Guest' : (savedAccounts[0].full_name || savedAccounts[0].email)}
+              Continue as {savedAccounts[0].full_name || savedAccounts[0].email}
             </button>
             <button
               type="button"
@@ -299,15 +302,6 @@ export default function Login() {
               Continue with Email
             </button>
 
-            {isDespia && (
-              <button
-                type="button"
-                onClick={handleFaceIdSignIn}
-                className="w-full h-12 text-[15px] font-medium text-muted-foreground active:opacity-60"
-              >
-                Continue as guest
-              </button>
-            )}
           </>
         )}
 
@@ -325,7 +319,6 @@ export default function Login() {
         onGoogle={() => { setPickerOpen(false); handleGoogleSignIn() }}
         onApple={() => { setPickerOpen(false); handleAppleSignIn() }}
         onEmail={() => { setPickerOpen(false); setView('email'); setError('') }}
-        onGuest={isDespia ? () => { setPickerOpen(false); handleFaceIdSignIn() } : undefined}
       />
     </div>
   )

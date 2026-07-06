@@ -195,3 +195,49 @@ logout  →  clearToken()   (stateless — nothing to revoke server-side)
 - [ ] Set **`RESEND_API_KEY`** if using password reset emails.
 - [ ] Confirm none of these are committed to the repo or referenced on the frontend.
 - [ ] Test: register → the returned token verifies via `authMe` and the user stays signed in on reload.
+
+---
+
+## 9. Session model — logged in vs. guest (logged out)
+
+The app has exactly **two usage states**, never a third:
+
+| State | Identity | How you enter it | Can sign out? |
+|---|---|---|---|
+| **Logged in** | Real account: email/password, Google, or Apple | Explicit sign-in, saved-account tap, or a guest account that got **linked** | Yes |
+| **Logged out (guest)** | Anonymous device account (`is_anonymous: true`, keyed by the vault device UUID) | **Automatic** on native — never a button | No |
+
+### Reasoning
+
+- **Guest is not a choice, it's the default.** On native, "using the app logged out" *is* the
+  anonymous device session. Offering a "Continue as guest" button implied guest was an account
+  you pick — it isn't. The button was removed from the onboarding screen and the account picker,
+  and guests are filtered out of the saved-accounts list.
+- **A guest cannot sign out.** An anonymous account that was never linked to a real login has no
+  identity outside this device. "Signing out" of it would just mint the identical session again —
+  meaningless. The Sign out row is hidden for `is_anonymous` accounts; the upgrade path is the
+  "Protect your account" linking flow instead.
+- **Signing out of a real account returns you to guest.** The login screen always auto-runs the
+  device sign-in on native. If the device's anonymous account is **distinct** from the account you
+  signed out of, you land straight back in guest mode — the app stays usable.
+- **The one exception — a linked device account.** If the guest account was *upgraded* (linked to
+  email/Google/Apple), the device account **is** the real account. Auto-restoring it right after
+  sign-out would silently undo the sign-out. In that case (detected via `wasSignedOut()` +
+  `is_anonymous: false` from `deviceSignIn`) the session is discarded and the login screen is
+  shown, so re-entry is always an explicit user action.
+
+### Flow summary
+
+```
+App start (native) ──▶ deviceSignIn (automatic)
+   ├─ account is anonymous ───────────────▶ enter as guest
+   ├─ account linked, no prior sign-out ──▶ enter logged in (session restore)
+   └─ account linked, but wasSignedOut ───▶ discard token, show login screen
+
+Sign out (real accounts only) ──▶ set signed-out flag, clear token
+   └─ login screen auto-runs deviceSignIn again ──▶ back to guest (or picker, per above)
+```
+
+Implementation lives in `src/pages/Login.jsx` (auto sign-in + picker filtering),
+`src/pages/Account.jsx` (Sign out hidden for guests), and `src/lib/customAuth.js` (`logout()` /
+`wasSignedOut()` semantics).

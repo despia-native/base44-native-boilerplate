@@ -1,4 +1,4 @@
-import { Mail, User } from 'lucide-react'
+import { Mail } from 'lucide-react'
 import AppleIcon from '@/components/AppleIcon'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import GoogleIcon from '@/components/GoogleIcon'
@@ -9,7 +9,7 @@ import SavedAccountRow from '@/components/onboarding/SavedAccountRow'
 export default function AccountPickerDrawer({
   open, onOpenChange, savedAccounts,
   onSelectSaved, onRemoveSaved,
-  onGoogle, onApple, onEmail, onGuest,
+  onGoogle, onApple, onEmail,
 }) {
   const option = 'w-full h-13 min-h-[52px] flex items-center justify-center gap-3 rounded-full ember-glass ember-press active:scale-95 transition-transform text-[15px] font-semibold text-foreground'
   return (
@@ -45,11 +45,6 @@ export default function AccountPickerDrawer({
           <button type="button" onClick={onEmail} className={option}>
             <Mail className="w-5 h-5" /> Email
           </button>
-          {onGuest && (
-            <button type="button" onClick={onGuest} className="w-full h-11 text-[14px] font-medium text-muted-foreground active:opacity-60 flex items-center justify-center gap-2">
-              <User className="w-4 h-4" /> Continue as guest
-            </button>
-          )}
         </div>
       </DrawerContent>
     </Drawer>

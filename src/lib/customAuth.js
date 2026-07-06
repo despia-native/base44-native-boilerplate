@@ -114,10 +114,13 @@ export async function fetchMe() {
 }
 
 export function logout() {
-  // FULL sign-out (works for guest/device accounts too): mark the device
-  // signed-out FIRST so nothing silently restores the session, then clear the
-  // active token (localStorage + native vault). Saved accounts stay on the
-  // device so the login screen can offer one-tap "Continue as …" re-entry.
+  // Sign out of a REAL account (guests can't sign out — the UI hides the option,
+  // because the guest device account IS the logged-out state). Mark the device
+  // signed-out FIRST so the signed-out account is never silently restored, then
+  // clear the active token (localStorage + native vault). On native, the login
+  // screen then drops straight back into the automatic guest session — unless the
+  // device account was linked to the account just signed out of, in which case
+  // the user must pick an account explicitly. Saved accounts stay for one-tap re-entry.
   localStorage.setItem(SIGNED_OUT_KEY, '1');
   clearToken();
 }
