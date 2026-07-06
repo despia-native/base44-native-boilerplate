@@ -1,4 +1,5 @@
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { useEffect, useRef } from 'react'
+import { Routes, Route, Navigate, useLocation, useNavigationType } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import PageNotFound from '@/lib/PageNotFound'
 import ProtectedRoute from '@/components/ProtectedRoute'
@@ -15,25 +16,53 @@ import AdminUsers from '@/pages/AdminUsers'
 import AdminPush from '@/pages/AdminPush'
 import Debug from '@/pages/Debug'
 
-// iOS-style push transition: incoming view slides in from the right with a
-// gentle fade, outgoing view drifts left — using Apple's spring-like easing.
+// Native iOS navigation transitions, direction-aware:
+//  • push  — new page slides in from the right ON TOP; old page parallax-drifts
+//    to -30% and dims underneath (UINavigationController push).
+//  • back  — old page slides off to the right ON TOP; the previous page slides
+//    back from -30% underneath (UINavigationController pop).
+//  • tab   — switching between tab-bar roots crossfades (UITabBarController).
+const pageVariants = {
+  initial: (dir) =>
+    dir === 'tab' ? { opacity: 0, x: 0, zIndex: 1 }
+    : dir === 'back' ? { x: '-30%', opacity: 0.85, zIndex: 0 }
+    : { x: '100%', opacity: 1, zIndex: 2 },
+  animate: { x: 0, opacity: 1 },
+  exit: (dir) =>
+    dir === 'tab' ? { opacity: 0, x: 0, zIndex: 0 }
+    : dir === 'back' ? { x: '100%', opacity: 1, zIndex: 2 }
+    : { x: '-30%', opacity: 0.85, zIndex: 0 },
+}
+
+const TAB_TITLES = { '/': 'Home', '/account': 'Account' }
+
 export default function AnimatedRoutes() {
   const location = useLocation()
+  const navType = useNavigationType()
   // Tab pages share persistent chrome rendered OUTSIDE the route animation,
   // so the header and tab bar stay perfectly still while pages swipe under them.
-  const tabTitles = { '/': 'Home', '/account': 'Account' }
-  const tabPage = tabTitles[location.pathname]
+  const tabPage = TAB_TITLES[location.pathname]
+
+  // Direction: browser/gesture back = pop; tab-root ↔ tab-root = fade; else push.
+  const prevPathRef = useRef(location.pathname)
+  const prevPath = prevPathRef.current
+  let direction = navType === 'POP' ? 'back' : 'push'
+  if (TAB_TITLES[prevPath] && TAB_TITLES[location.pathname]) direction = 'tab'
+  useEffect(() => { prevPathRef.current = location.pathname }, [location.pathname])
 
   return (
-    <div className="relative flex-1 min-h-0 flex flex-col">
-    <AnimatePresence mode="popLayout" initial={false}>
+    <div className="relative flex-1 min-h-0 flex flex-col overflow-hidden">
+    <AnimatePresence mode="popLayout" initial={false} custom={direction}>
       <motion.div
         key={location.pathname}
-        className="flex-1 min-h-0 flex flex-col"
-        initial={{ opacity: 0, x: 28 }}
-        animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: -28 }}
-        transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
+        custom={direction}
+        variants={pageVariants}
+        initial="initial"
+        animate="animate"
+        exit="exit"
+        className="flex-1 min-h-0 flex flex-col bg-background"
+        style={{ boxShadow: '-0.75rem 0 2rem rgba(0,0,0,.18)' }}
+        transition={{ duration: 0.35, ease: [0.32, 0.72, 0, 1] }}
       >
         <Routes location={location}>
           <Route path="/login" element={<Login />} />
