@@ -4,6 +4,7 @@ import * as React from "react"
 import { Drawer as DrawerPrimitive } from "vaul"
 
 import { cn } from "@/lib/utils"
+import DrawerHeightAnimator from "@/components/mobile/DrawerHeightAnimator"
 
 const Drawer = ({
   shouldScaleBackground = true,
@@ -39,7 +40,8 @@ const DrawerContent = React.forwardRef(({ className, children, ...props }, ref) 
       {...props}>
       {/* iOS grabber */}
       <div className="mx-auto mt-2.5 h-[5px] w-9 shrink-0 rounded-full bg-foreground/20" />
-      {children}
+      {/* Height animates smoothly whenever the inner content grows/shrinks */}
+      <DrawerHeightAnimator>{children}</DrawerHeightAnimator>
     </DrawerPrimitive.Content>
   </DrawerPortal>
 ))
