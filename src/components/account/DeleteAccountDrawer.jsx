@@ -88,7 +88,9 @@ export default function DeleteAccountDrawer({ open, onOpenChange, account, onDel
           </div>
           <p className="text-[14px] text-muted-foreground text-center leading-snug px-2">
             {step === 1
-              ? 'Your account and all its data will be permanently deleted. This cannot be undone.'
+              ? native
+                ? 'Your account and all personal data will be permanently deleted. This cannot be undone. Purchases made on this device stay with the device.'
+                : 'Your account and all its data will be permanently deleted. This cannot be undone.'
               : native
                 ? 'Verify it\u2019s you to permanently delete this account.'
                 : 'Type DELETE below to permanently delete this account.'}

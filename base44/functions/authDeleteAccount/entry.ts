@@ -1,6 +1,22 @@
-// Custom auth — permanently delete the current account.
-// The user confirms in-app (biometrics via locked Storage Vault, or password)
-// before the frontend calls this. Token comes via x-app-token header or body.
+// Custom auth — delete the current account (Apple 5.1.1(v) / Google Play compliant).
+//
+// TWO DELETION MODES — see ACCOUNT_DELETION.md for the full rationale:
+//
+//  • ANONYMIZE (account has a device_id — it is/was a native device account):
+//    All personal data is wiped (email, name, password, Google/Apple identity,
+//    avatar) and the record reverts to the anonymous guest account for that
+//    device — "linked" becomes "unlinked". The record ID is KEPT on purpose:
+//    RevenueCat entitlements are keyed to this account id (external_id), so
+//    deleting the row would orphan the user's in-app purchases. Keeping the
+//    anonymous shell preserves IAP access while removing every piece of PII,
+//    which is what the store rules actually require ("delete the account and
+//    associated personal data").
+//
+//  • HARD DELETE (no device_id — web-only account, never bound to a device):
+//    The record is removed entirely. There is no device/IAP identity to keep.
+//
+// The user confirms in-app (biometrics via locked Storage Vault, or password /
+// type-DELETE) before the frontend calls this. Token via x-app-token or body.
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 function fromB64url(str) {
@@ -41,11 +57,35 @@ Deno.serve(async (req) => {
 
     const base44 = createClientFromRequest(req);
     const account = await base44.asServiceRole.entities.Account.get(payload.sub).catch(() => null);
-    if (account) {
-      await base44.asServiceRole.entities.Account.delete(payload.sub);
-    }
     // Idempotent: already-deleted accounts also return success.
-    return Response.json({ success: true });
+    if (!account) return Response.json({ success: true, mode: 'already_deleted' });
+
+    // ── 1. Wipe ALL app data owned by this account ─────────────────────────
+    // IMPORTANT (compliance): every future entity that stores user data keyed
+    // to the account MUST be wiped here, e.g.:
+    //   await base44.asServiceRole.entities.Task.deleteMany({ account_id: account.id });
+
+    // ── 2. Remove the account identity ─────────────────────────────────────
+    if (account.device_id) {
+      // Device-bound: anonymize back to the guest account (linked → unlinked).
+      // Same record id ⇒ RevenueCat external_id unchanged ⇒ IAPs stay valid.
+      await base44.asServiceRole.entities.Account.update(account.id, {
+        email: `device-${account.device_id.toLowerCase()}@anon.local`,
+        full_name: 'Guest',
+        password_hash: '',
+        google_id: '',
+        apple_id: '',
+        avatar_url: '',
+        email_verified: false,
+        is_anonymous: true,
+        role: 'user',
+      });
+      return Response.json({ success: true, mode: 'anonymized' });
+    }
+
+    // Web-only account: nothing device-bound to preserve — remove entirely.
+    await base44.asServiceRole.entities.Account.delete(account.id);
+    return Response.json({ success: true, mode: 'deleted' });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
