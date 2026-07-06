@@ -10,6 +10,8 @@ import { haptics } from '@/lib/haptics'
 import { appConfig } from '@/config/app-config'
 import GoogleIcon from '@/components/GoogleIcon'
 import OnboardingCarousel from '@/components/onboarding/OnboardingCarousel'
+import SavedAccountRow from '@/components/onboarding/SavedAccountRow'
+import { loadSavedAccounts, removeSavedAccount } from '@/lib/savedAccounts'
 
 const isDespia = isNative()
 
@@ -39,17 +41,42 @@ export default function Login() {
   const [fullName, setFullName] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  // Loginless native flow: auto sign-in as a device-backed guest.
-  const [autoSignIn, setAutoSignIn] = useState(isDespia)
+  const [savedAccounts, setSavedAccounts] = useState([])
+  // Loginless native flow: auto sign-in as a device-backed guest — skipped after
+  // an explicit sign-out (iOS behavior: show the account picker instead).
+  const [autoSignIn, setAutoSignIn] = useState(isDespia && !customAuth.wasSignedOut())
 
   useEffect(() => {
-    if (!isDespia) return
+    loadSavedAccounts().then(setSavedAccounts)
+    if (!isDespia || customAuth.wasSignedOut()) return
     let cancelled = false
     signInWithDevice()
       .then(() => { if (!cancelled) window.location.href = '/' })
       .catch(() => { if (!cancelled) setAutoSignIn(false) }) // fall back to onboarding
     return () => { cancelled = true }
   }, [])
+
+  // One-tap re-entry with an account previously used on this device.
+  const handleSavedAccount = async (acct) => {
+    setError('')
+    setAutoSignIn(true)
+    customAuth.setToken(acct.token)
+    const account = await customAuth.fetchMe()
+    if (account) {
+      window.location.href = '/'
+      return
+    }
+    // Token expired or the account no longer exists — drop it from the device.
+    removeSavedAccount(acct.id)
+    setSavedAccounts((list) => list.filter((a) => a.id !== acct.id))
+    setAutoSignIn(false)
+    setError('That session expired — please sign in again.')
+  }
+
+  const handleRemoveSaved = (id) => {
+    removeSavedAccount(id)
+    setSavedAccounts((list) => list.filter((a) => a.id !== id))
+  }
 
   const handleFaceIdSignIn = async () => {
     setError('')
@@ -211,6 +238,20 @@ export default function Login() {
       {/* Bottom CTA stack */}
       <div className="w-full max-w-sm mx-auto px-5 pb-6 flex flex-col gap-3">
         {error && <p className="text-[13px] text-destructive text-center">{error}</p>}
+
+        {savedAccounts.length > 0 && (
+          <div className="rounded-3xl ember-card overflow-hidden mb-1">
+            {savedAccounts.map((a, i) => (
+              <SavedAccountRow
+                key={a.id}
+                account={a}
+                first={i === 0}
+                onSelect={() => handleSavedAccount(a)}
+                onRemove={() => handleRemoveSaved(a.id)}
+              />
+            ))}
+          </div>
+        )}
 
         <button
           onClick={handleGoogleSignIn}

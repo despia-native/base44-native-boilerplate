@@ -9,6 +9,7 @@
 // id (and therefore restoring the session) requires a biometric prompt.
 import despia from 'despia-native';
 import * as customAuth from '@/lib/customAuth';
+import { saveAccountSession } from '@/lib/savedAccounts';
 
 const DEVICE_KEY = 'app_device_id';
 
@@ -36,5 +37,6 @@ export async function signInWithDevice({ biometric = false } = {}) {
   const deviceId = await getOrCreateDeviceId({ biometric });
   const data = await customAuth.invokeAuth('deviceSignIn', { device_id: deviceId });
   customAuth.setToken(data.token);
+  saveAccountSession(data.account, data.token); // guest shows in the device's account picker too
   return data.account;
 }
