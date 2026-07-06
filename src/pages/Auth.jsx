@@ -16,7 +16,6 @@ export default function Auth() {
   const navigate = useNavigate()
   const { checkUserAuth } = useAuth()
   const [status, setStatus] = useState('Signing you in...')
-  const [ready, setReady] = useState(false) // set once login succeeds; user taps Continue
   const handledRef = useRef(false)
 
   useEffect(() => {
@@ -36,8 +35,8 @@ export default function Auth() {
       authPromise
         .then(async () => {
           await checkUserAuth()
-          setStatus('Signed in! Tap Continue to enter the app.')
-          setReady(true)
+          // Auto-enter the app — soft SPA navigation, no reload, no button.
+          navigate('/', { replace: true })
         })
         .catch((err) => {
           const msg = err?.response?.data?.error || err?.message || 'Unknown error'
@@ -93,16 +92,6 @@ export default function Auth() {
         <div className="w-8 h-8 border-[3px] border-border border-t-primary rounded-full animate-spin" />
         <p className="text-[15px] text-muted-foreground text-center">{status}</p>
       </div>
-
-      {ready && (
-        <button
-          type="button"
-          onClick={() => navigate('/', { replace: true })}
-          className="w-full max-w-sm h-14 rounded-full ember-primary text-[16px] font-bold active:scale-95 transition-transform"
-        >
-          Continue to App
-        </button>
-      )}
     </div>
   )
 }
