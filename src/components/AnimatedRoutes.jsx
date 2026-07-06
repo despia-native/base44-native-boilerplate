@@ -61,7 +61,7 @@ export default function AnimatedRoutes() {
         animate="animate"
         exit="exit"
         className="flex-1 min-h-0 flex flex-col bg-background"
-        style={{ boxShadow: '-0.75rem 0 2rem rgba(0,0,0,.18)' }}
+        style={{ boxShadow: '-0.75rem 0 2rem rgba(0,0,0,.18)', willChange: 'transform' }}
         transition={{ duration: 0.35, ease: [0.32, 0.72, 0, 1] }}
       >
         <Routes location={location}>
