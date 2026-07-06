@@ -3,21 +3,16 @@ import { Trash2, ShieldAlert } from 'lucide-react'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import * as customAuth from '@/lib/customAuth'
 import { confirmWithLockedVault } from '@/lib/biometricConfirm'
-import { startGoogleReauth, startAppleReauth } from '@/lib/reauth'
 import { isNative } from '@/lib/deviceAuth'
 import { haptics } from '@/lib/haptics'
 import DeleteConfirmStep from '@/components/account/DeleteConfirmStep'
 
-// Two-step account deletion (see src/ACCOUNT_DELETION.md):
+// Two-step account deletion (see ACCOUNT_DELETION.md):
 // 1. Warning drawer — the user explicitly confirms they want to delete.
-// 2. Identity check with the account's ORIGINAL sign-in method:
-//    password → password · Google → Google re-auth · Apple → Apple re-auth.
-//    Guests (no method): biometrics on native (locked Storage Vault read).
-//    Google (and Apple on Android) round-trips through OAuth; Auth.jsx
-//    finishes the deletion after the provider confirms identity.
+// 2. Explicit confirmation using the CURRENT authenticated session:
+//    native → biometrics (locked Storage Vault read) · web → type DELETE ACCOUNT.
 export default function DeleteAccountDrawer({ open, onOpenChange, account, onDeleted }) {
   const native = isNative()
-  const methods = account?.auth_methods || {}
   const [step, setStep] = useState(1)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -34,49 +29,6 @@ export default function DeleteAccountDrawer({ open, onOpenChange, account, onDel
       onDeleted()
     } catch (err) {
       setError(err?.response?.data?.error || err?.message || 'Deletion failed — please try again.')
-      setBusy(false)
-    }
-  }
-
-  const handlePassword = async (password) => {
-    setError('')
-    setBusy(true)
-    try {
-      await customAuth.verifyPassword(account.email, password)
-    } catch {
-      haptics.error?.()
-      setError('Incorrect password')
-      setBusy(false)
-      return
-    }
-    await doDelete()
-  }
-
-  const handleGoogle = async () => {
-    setError('')
-    setBusy(true)
-    haptics.heavy?.()
-    try {
-      await startGoogleReauth(account.id) // navigates away; Auth.jsx completes the deletion
-    } catch (err) {
-      setError(err?.response?.data?.error || err?.message || 'Could not start Google confirmation')
-      setBusy(false)
-    }
-  }
-
-  const handleApple = async () => {
-    setError('')
-    setBusy(true)
-    haptics.heavy?.()
-    try {
-      const result = await startAppleReauth(account.id)
-      if (!result) return // Android: continues via deeplink → /auth
-      await customAuth.reauthWithAppleToken(result.idToken)
-      await doDelete()
-    } catch (err) {
-      if (err?.error === 'popup_closed_by_user') { setBusy(false); return }
-      haptics.error?.()
-      setError(err?.response?.data?.error || err?.message || 'Apple confirmation failed')
       setBusy(false)
     }
   }
@@ -101,15 +53,9 @@ export default function DeleteAccountDrawer({ open, onOpenChange, account, onDel
     await doDelete()
   }
 
-  const step2Text = methods.password
-    ? 'Enter your password to permanently delete this account.'
-    : methods.google
-      ? 'Re-authenticate with Google to permanently delete this account.'
-      : methods.apple
-        ? 'Re-authenticate with Apple to permanently delete this account.'
-        : native
-          ? 'Verify it\u2019s you to permanently delete this account.'
-          : 'Type DELETE below to permanently delete this account.'
+  const step2Text = native
+    ? 'Verify it\u2019s you to permanently delete this account.'
+    : 'Type DELETE ACCOUNT below to permanently delete this account.'
 
   return (
     <Drawer open={open} onOpenChange={close}>
@@ -153,12 +99,8 @@ export default function DeleteAccountDrawer({ open, onOpenChange, account, onDel
           ) : (
             <>
               <DeleteConfirmStep
-                methods={methods}
                 native={native}
                 busy={busy}
-                onPassword={handlePassword}
-                onGoogle={handleGoogle}
-                onApple={handleApple}
                 onBiometric={handleBiometric}
                 onTypeConfirm={handleTypeConfirm}
               />
