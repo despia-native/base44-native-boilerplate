@@ -1,6 +1,7 @@
 import base44 from "@base44/vite-plugin"
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
+import { despiaLocalPlugin } from '@despia/local/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -15,5 +16,11 @@ export default defineConfig({
       visualEditAgent: true
     }),
     react(),
+    // Despia local server: generates despia/local.json manifest on build so the
+    // native app can hydrate, serve from localhost, and apply OTA updates.
+    despiaLocalPlugin({
+      outDir: 'dist',
+      entryHtml: 'index.html'
+    }),
   ]
 });
