@@ -1,29 +1,30 @@
 import { useState } from 'react'
-import { Trash2, Fingerprint, ShieldAlert } from 'lucide-react'
+import { Trash2, ShieldAlert } from 'lucide-react'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import * as customAuth from '@/lib/customAuth'
 import { confirmWithLockedVault } from '@/lib/biometricConfirm'
+import { startGoogleReauth, startAppleReauth } from '@/lib/reauth'
 import { isNative } from '@/lib/deviceAuth'
 import { haptics } from '@/lib/haptics'
+import DeleteConfirmStep from '@/components/account/DeleteConfirmStep'
 
-// Two-step account deletion:
+// Two-step account deletion (see src/ACCOUNT_DELETION.md):
 // 1. Warning drawer — the user explicitly confirms they want to delete.
-// 2. Confirmation drawer — verify identity with biometrics (locked Storage
-//    Vault read = Face ID / Touch ID) on native, or password as fallback.
+// 2. Identity check with the account's ORIGINAL sign-in method:
+//    password → password · Google → Google re-auth · Apple → Apple re-auth.
+//    Guests (no method): biometrics on native (locked Storage Vault read).
+//    Google (and Apple on Android) round-trips through OAuth; Auth.jsx
+//    finishes the deletion after the provider confirms identity.
 export default function DeleteAccountDrawer({ open, onOpenChange, account, onDeleted }) {
   const native = isNative()
-  // Password fallback only makes sense on native (as a biometric backup) —
-  // on the web, accounts may be Google/Apple-only, so type-to-confirm is the default.
-  const hasPassword = native && !account?.is_anonymous
+  const methods = account?.auth_methods || {}
   const [step, setStep] = useState(1)
-  const [password, setPassword] = useState('')
-  const [confirmText, setConfirmText] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
   const close = (o) => {
     onOpenChange(o)
-    if (!o) { setStep(1); setPassword(''); setConfirmText(''); setError(''); setBusy(false) }
+    if (!o) { setStep(1); setError(''); setBusy(false) }
   }
 
   const doDelete = async () => {
@@ -37,22 +38,7 @@ export default function DeleteAccountDrawer({ open, onOpenChange, account, onDel
     }
   }
 
-  const handleBiometric = async () => {
-    setError('')
-    setBusy(true)
-    haptics.heavy?.()
-    const ok = await confirmWithLockedVault()
-    if (!ok) {
-      haptics.error?.()
-      setError(hasPassword ? 'Biometric confirmation failed — try again or use your password.' : 'Biometric confirmation failed — please try again.')
-      setBusy(false)
-      return
-    }
-    await doDelete()
-  }
-
-  const handlePassword = async (e) => {
-    e.preventDefault()
+  const handlePassword = async (password) => {
     setError('')
     setBusy(true)
     try {
@@ -66,13 +52,64 @@ export default function DeleteAccountDrawer({ open, onOpenChange, account, onDel
     await doDelete()
   }
 
-  const handleTypeConfirm = async (e) => {
-    e.preventDefault()
-    if (confirmText.trim().toUpperCase() !== 'DELETE') return
+  const handleGoogle = async () => {
+    setError('')
+    setBusy(true)
+    haptics.heavy?.()
+    try {
+      await startGoogleReauth(account.id) // navigates away; Auth.jsx completes the deletion
+    } catch (err) {
+      setError(err?.response?.data?.error || err?.message || 'Could not start Google confirmation')
+      setBusy(false)
+    }
+  }
+
+  const handleApple = async () => {
+    setError('')
+    setBusy(true)
+    haptics.heavy?.()
+    try {
+      const result = await startAppleReauth(account.id)
+      if (!result) return // Android: continues via deeplink → /auth
+      await customAuth.reauthWithAppleToken(result.idToken)
+      await doDelete()
+    } catch (err) {
+      if (err?.error === 'popup_closed_by_user') { setBusy(false); return }
+      haptics.error?.()
+      setError(err?.response?.data?.error || err?.message || 'Apple confirmation failed')
+      setBusy(false)
+    }
+  }
+
+  const handleBiometric = async () => {
+    setError('')
+    setBusy(true)
+    haptics.heavy?.()
+    const ok = await confirmWithLockedVault()
+    if (!ok) {
+      haptics.error?.()
+      setError('Biometric confirmation failed — please try again.')
+      setBusy(false)
+      return
+    }
+    await doDelete()
+  }
+
+  const handleTypeConfirm = async () => {
     setError('')
     setBusy(true)
     await doDelete()
   }
+
+  const step2Text = methods.password
+    ? 'Enter your password to permanently delete this account.'
+    : methods.google
+      ? 'Re-authenticate with Google to permanently delete this account.'
+      : methods.apple
+        ? 'Re-authenticate with Apple to permanently delete this account.'
+        : native
+          ? 'Verify it\u2019s you to permanently delete this account.'
+          : 'Type DELETE below to permanently delete this account.'
 
   return (
     <Drawer open={open} onOpenChange={close}>
@@ -91,9 +128,7 @@ export default function DeleteAccountDrawer({ open, onOpenChange, account, onDel
               ? native
                 ? 'Your account and all personal data will be permanently deleted. This cannot be undone. Purchases made on this device stay with the device.'
                 : 'Your account and all its data will be permanently deleted. This cannot be undone.'
-              : native
-                ? 'Verify it\u2019s you to permanently delete this account.'
-                : 'Type DELETE below to permanently delete this account.'}
+              : step2Text}
           </p>
 
           {error && <p className="text-[13px] text-destructive text-center">{error}</p>}
@@ -117,55 +152,16 @@ export default function DeleteAccountDrawer({ open, onOpenChange, account, onDel
             </>
           ) : (
             <>
-              {native && (
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={handleBiometric}
-                  className="w-full h-14 flex items-center justify-center gap-2.5 rounded-full ember-danger text-[16px] font-bold disabled:opacity-40"
-                >
-                  {busy ? <span className="ember-spinner" /> : <><Fingerprint className="w-5 h-5" /> Confirm with biometrics</>}
-                </button>
-              )}
-              {hasPassword && (
-                <form onSubmit={handlePassword} className="flex flex-col gap-3">
-                  <input
-                    type="password"
-                    required
-                    placeholder="Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="ember-input"
-                  />
-                  <button
-                    type="submit"
-                    disabled={busy || !password}
-                    className="w-full h-14 rounded-full text-[16px] font-semibold ember-glass ember-press text-foreground disabled:opacity-40"
-                  >
-                    Confirm with password
-                  </button>
-                </form>
-              )}
-              {!native && (
-                <form onSubmit={handleTypeConfirm} className="flex flex-col gap-3">
-                  <input
-                    type="text"
-                    required
-                    autoComplete="off"
-                    placeholder="Type DELETE to confirm"
-                    value={confirmText}
-                    onChange={(e) => setConfirmText(e.target.value)}
-                    className="ember-input"
-                  />
-                  <button
-                    type="submit"
-                    disabled={busy || confirmText.trim().toUpperCase() !== 'DELETE'}
-                    className="w-full h-14 rounded-full ember-danger text-[16px] font-bold disabled:opacity-40"
-                  >
-                    {busy ? <span className="ember-spinner inline-block align-middle" /> : 'Permanently delete'}
-                  </button>
-                </form>
-              )}
+              <DeleteConfirmStep
+                methods={methods}
+                native={native}
+                busy={busy}
+                onPassword={handlePassword}
+                onGoogle={handleGoogle}
+                onApple={handleApple}
+                onBiometric={handleBiometric}
+                onTypeConfirm={handleTypeConfirm}
+              />
               <button
                 type="button"
                 onClick={() => close(false)}

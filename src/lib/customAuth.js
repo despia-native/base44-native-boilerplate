@@ -118,6 +118,14 @@ export async function verifyPassword(email, password) {
   await invoke('authLogin', { email, password });
 }
 
+// Re-verify identity with the ORIGINAL provider (no session change; throws on mismatch).
+export async function reauthWithGoogleCode(google_code) {
+  await invoke('authReauth', { google_code });
+}
+export async function reauthWithAppleToken(apple_id_token) {
+  await invoke('authReauth', { apple_id_token });
+}
+
 // Permanently delete the current account (call only after in-app confirmation).
 export async function deleteAccount() {
   await invoke('authDeleteAccount', {});

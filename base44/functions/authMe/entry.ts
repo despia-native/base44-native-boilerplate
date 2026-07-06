@@ -53,6 +53,13 @@ Deno.serve(async (req) => {
         avatar_url: account.avatar_url || null,
         email_verified: account.email_verified || false,
         is_anonymous: account.is_anonymous || false,
+        // Which original sign-in methods this account has — the frontend uses
+        // this to pick the matching re-auth method before account deletion.
+        auth_methods: {
+          password: !!account.password_hash,
+          google: !!account.google_id,
+          apple: !!account.apple_id,
+        },
       },
     });
   } catch (error) {

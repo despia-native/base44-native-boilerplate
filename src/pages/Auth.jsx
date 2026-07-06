@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import * as customAuth from '@/lib/customAuth'
 import { useAuth } from '@/lib/AuthContext'
 import { readFromUrl, consumePendingToken } from '@/lib/deeplinkToken'
+import { removeSavedAccount } from '@/lib/savedAccounts'
+import { REAUTH_DELETE_KEY } from '@/lib/reauth'
 
 // The token may have been stashed at boot (captured from the deep-link before
 // React mounted) OR still be sitting in the live URL. Check both.
@@ -22,6 +24,32 @@ export default function Auth() {
     const handleToken = ({ code, idToken }) => {
       if (handledRef.current) return
       handledRef.current = true
+      // Re-auth-and-delete mode: the user is confirming account deletion with
+      // their original provider. Verify the proof matches the CURRENT account,
+      // then delete — never sign in with whatever account came back.
+      const reauthDeleteId = localStorage.getItem(REAUTH_DELETE_KEY)
+      if (reauthDeleteId) {
+        localStorage.removeItem(REAUTH_DELETE_KEY)
+        setStatus('Confirming your identity...')
+        const verify = idToken
+          ? customAuth.reauthWithAppleToken(idToken)
+          : customAuth.reauthWithGoogleCode(code)
+        verify
+          .then(() => customAuth.deleteAccount())
+          .then(() => {
+            removeSavedAccount(reauthDeleteId)
+            customAuth.logout()
+            setStatus('Account deleted.')
+            // Hard redirect so the auth provider fully re-initializes signed out.
+            setTimeout(() => { window.location.href = '/login' }, 800)
+          })
+          .catch((err) => {
+            const msg = err?.response?.data?.error || err?.message || 'Unknown error'
+            setStatus('Deletion not confirmed: ' + msg)
+            setTimeout(() => navigate('/account'), 3000)
+          })
+        return
+      }
       setStatus('Verifying your account...')
       // Link mode: attach the Google identity to the current anonymous account
       // (set by the "Protect your account" flow) instead of a fresh sign-in.
