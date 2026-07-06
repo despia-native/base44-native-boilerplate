@@ -1,6 +1,9 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Users, LogOut, ShieldCheck, Mail, BadgeCheck, UserPlus, ChevronRight, Bell, Bug } from 'lucide-react'
+import { Users, LogOut, ShieldCheck, Mail, BadgeCheck, UserPlus, ChevronRight, Bell, Bug, Trash2 } from 'lucide-react'
 import { useAuth } from '@/lib/AuthContext'
+import { removeSavedAccount } from '@/lib/savedAccounts'
+import DeleteAccountDrawer from '@/components/account/DeleteAccountDrawer'
 import ListRow from '@/components/mobile/ListRow'
 import PremiumSection from '@/components/premium/PremiumSection'
 import PoweredByDespia from '@/components/PoweredByDespia'
@@ -9,6 +12,13 @@ export default function Account() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const isAdmin = user?.role === 'admin'
+  const [deleteOpen, setDeleteOpen] = useState(false)
+
+  // Account is gone server-side — drop it from the device switcher and sign out.
+  const handleDeleted = () => {
+    if (user?.id) removeSavedAccount(user.id)
+    logout()
+  }
 
   return (
     <div className="relative flex flex-col h-full bg-background">
@@ -144,9 +154,29 @@ export default function Account() {
             />
           </div>
         )}
+        {/* Delete account — available to everyone (guests included) */}
+        <div className="mt-6 rounded-3xl ember-card overflow-hidden">
+          <ListRow
+            icon={Trash2}
+            iconBg="bg-destructive/10"
+            label="Delete account"
+            danger
+            showChevron={false}
+            onClick={() => setDeleteOpen(true)}
+            first
+          />
+        </div>
+
         <PoweredByDespia className="mt-6" />
         <div className="h-32" />
       </div>
+
+      <DeleteAccountDrawer
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        account={user}
+        onDeleted={handleDeleted}
+      />
     </div>
   )
 }

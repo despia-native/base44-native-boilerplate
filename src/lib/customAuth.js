@@ -113,6 +113,16 @@ export async function fetchMe() {
   }
 }
 
+// Re-verify the user's password (throws on mismatch) without changing the session.
+export async function verifyPassword(email, password) {
+  await invoke('authLogin', { email, password });
+}
+
+// Permanently delete the current account (call only after in-app confirmation).
+export async function deleteAccount() {
+  await invoke('authDeleteAccount', {});
+}
+
 export function logout() {
   // Sign out of a REAL account (guests can't sign out — the UI hides the option,
   // because the guest device account IS the logged-out state). Mark the device
