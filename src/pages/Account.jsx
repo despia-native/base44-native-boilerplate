@@ -114,16 +114,18 @@ export default function Account() {
           </>
         )}
 
-        {/* Developer tools */}
-        <div className="mt-6 rounded-3xl ember-card overflow-hidden">
-          <ListRow
-            icon={Bug}
-            iconBg="bg-muted"
-            label="Push debug"
-            onClick={() => navigate('/debug')}
-            first
-          />
-        </div>
+        {/* Developer tools — admin only in production */}
+        {isAdmin && (
+          <div className="mt-6 rounded-3xl ember-card overflow-hidden">
+            <ListRow
+              icon={Bug}
+              iconBg="bg-muted"
+              label="Push debug"
+              onClick={() => navigate('/debug')}
+              first
+            />
+          </div>
+        )}
 
         {/* Sign out — only for REAL accounts. A guest (anonymous device account
             never linked to email/Google/Apple) IS the logged-out state; signing

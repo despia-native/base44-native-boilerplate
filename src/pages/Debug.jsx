@@ -7,11 +7,16 @@ import { isDespia, checkPushPermission, openDeviceSettings, linkPushUser, sendPu
 // User-facing push debug panel (/debug): shows permission status and lets the
 // user send themselves a test push to verify the pipeline end-to-end.
 export default function Debug() {
-  const { user } = useAuth()
+  const { user, authChecked } = useAuth()
   const navigate = useNavigate()
   const [permission, setPermission] = useState(null) // true | false | null (web/unknown)
   const [sending, setSending] = useState(false)
   const [result, setResult] = useState(null)
+
+  // Admin-only in production — mirrors the gating on the Account page row.
+  useEffect(() => {
+    if (authChecked && user?.role !== 'admin') navigate('/')
+  }, [authChecked, user, navigate])
 
   useEffect(() => {
     if (isDespia) checkPushPermission().then(setPermission)
