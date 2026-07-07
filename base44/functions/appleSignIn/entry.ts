@@ -13,6 +13,15 @@ function b64urlToStr(input) {
   while (s.length % 4) s += '=';
   return atob(s);
 }
+// Decode a base64url segment straight to bytes. The signature is never compared
+// manually — verification is fully delegated to crypto.subtle.verify, which
+// performs the cryptographic comparison in constant time.
+function b64urlToBytes(input) {
+  const bin = b64urlToStr(input);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
 function b64url(bytes) {
   let str = typeof bytes === 'string' ? bytes : String.fromCharCode(...new Uint8Array(bytes));
   return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -41,7 +50,7 @@ async function verifyAppleIdToken(idToken, clientId) {
   if (!jwk) throw new Error('Unknown Apple signing key');
 
   const key = await crypto.subtle.importKey('jwk', jwk, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['verify']);
-  const sig = Uint8Array.from(b64urlToStr(parts[2]), (c) => c.charCodeAt(0));
+  const sig = b64urlToBytes(parts[2]);
   const valid = await crypto.subtle.verify('RSASSA-PKCS1-v1_5', key, sig, new TextEncoder().encode(`${parts[0]}.${parts[1]}`));
   if (!valid) throw new Error('Invalid Apple token signature');
 

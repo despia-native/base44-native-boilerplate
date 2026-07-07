@@ -42,7 +42,22 @@ Deno.serve(async (req) => {
         60 * 30, // 30 minutes
       );
 
-      const base = (app_url || '').replace(/\/$/, '');
+      // Security: never trust a client-supplied URL for the email link (open redirect →
+      // reset-token theft). Use the APP_BASE_URL secret when set (e.g. your custom domain);
+      // otherwise only accept an https app_url on a trusted platform host.
+      let base = (Deno.env.get('APP_BASE_URL') || '').replace(/\/$/, '');
+      if (!base && app_url) {
+        try {
+          const u = new URL(app_url);
+          if (u.protocol === 'https:' && (u.hostname.endsWith('.base44.app') || u.hostname.endsWith('.base44.com'))) {
+            base = u.origin;
+          }
+        } catch (_) { /* ignore malformed URLs */ }
+      }
+      if (!base) {
+        console.error('authRequestReset: no trusted base URL (set the APP_BASE_URL secret); email not sent.');
+        return Response.json({ success: true });
+      }
       const link = `${base}/reset-password?token=${encodeURIComponent(resetToken)}`;
 
       // Send via Resend so we can reach any email (not just registered Base44 users).
