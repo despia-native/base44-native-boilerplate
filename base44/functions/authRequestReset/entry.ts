@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
       // Security: never trust a client-supplied URL for the email link (open redirect →
       // reset-token theft). Use the APP_BASE_URL secret when set (e.g. your custom domain);
       // otherwise only accept an https app_url on a trusted platform host.
-      let base = (Deno.env.get('APP_BASE_URL') || '').replace(/\/$/, '');
+      let base = (Deno.env.get('APP_BASE_URL') || 'https://despia-connect-go.base44.app').replace(/\/$/, '');
       if (!base && app_url) {
         try {
           const u = new URL(app_url);
