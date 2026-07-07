@@ -64,12 +64,20 @@
         "role": "__service_only__"
       }
     },
-    "read": false,
+    "read": {
+      "user_condition": {
+        "role": "__service_only__"
+      }
+    },
     "update": {
       "user_condition": {
         "role": "__service_only__"
       }
     },
-    "delete": false
+    "delete": {
+      "user_condition": {
+        "role": "__service_only__"
+      }
+    }
   }
 }
