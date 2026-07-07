@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
       return new Response(null, { status: 204, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, content-type' } });
     }
 
-    const { email, app_url } = await req.json();
+    const { email } = await req.json();
     if (!email) return Response.json({ error: 'Email is required' }, { status: 400 });
 
     const cleanEmail = email.toLowerCase().trim();
@@ -42,22 +42,10 @@ Deno.serve(async (req) => {
         60 * 30, // 30 minutes
       );
 
-      // Security: never trust a client-supplied URL for the email link (open redirect →
-      // reset-token theft). Use the APP_BASE_URL secret when set (e.g. your custom domain);
-      // otherwise only accept an https app_url on a trusted platform host.
-      let base = (Deno.env.get('APP_BASE_URL') || 'https://despia-connect-go.base44.app').replace(/\/$/, '');
-      if (!base && app_url) {
-        try {
-          const u = new URL(app_url);
-          if (u.protocol === 'https:' && (u.hostname.endsWith('.base44.app') || u.hostname.endsWith('.base44.com'))) {
-            base = u.origin;
-          }
-        } catch (_) { /* ignore malformed URLs */ }
-      }
-      if (!base) {
-        console.error('authRequestReset: no trusted base URL (set the APP_BASE_URL secret); email not sent.');
-        return Response.json({ success: true });
-      }
+      // Security: never use a client-supplied URL for the email link (open redirect →
+      // reset-token theft). The link base is always server-controlled: the APP_BASE_URL
+      // secret when set (e.g. a custom domain), otherwise the app's own domain.
+      const base = (Deno.env.get('APP_BASE_URL') || 'https://despia-connect-go.base44.app').replace(/\/$/, '');
       const link = `${base}/reset-password?token=${encodeURIComponent(resetToken)}`;
 
       // Send via Resend so we can reach any email (not just registered Base44 users).
