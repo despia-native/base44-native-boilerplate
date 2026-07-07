@@ -85,10 +85,6 @@ Every entity ships with a **deny-all RLS block** — zero direct client database
 | `PUSH_NOTIFICATIONS.md` | Push setup and sending |
 | `src/DESPIA_NATIVE.md` | Working with Despia native features |
 
-## 🔑 Keywords
-
-`mobile app starter` · `react native alternative` · `webview app template` · `web to app converter` · `ios app boilerplate` · `android app boilerplate` · `app store compliant template` · `react mobile app template` · `vite tailwind starter` · `jwt authentication template` · `google sign in webview` · `sign in with apple` · `guest login` · `push notifications webview` · `revenuecat subscription starter` · `in-app purchases hybrid app` · `pwa to native app` · `no-code backend` · `base44 template` · `despia app` · `hybrid app boilerplate` · `saas mobile starter kit` · `admin dashboard template` · `dark mode ui kit` · `ios design system`
-
 > ℹ️ **Keep the Base44 setup below intact.** This project runs *on* Base44 — the CLI, config, and hosted-backend steps are how you run, edit, and publish it.
 
 ---
