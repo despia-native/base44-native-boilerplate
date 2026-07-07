@@ -2,6 +2,7 @@
 // Native: schemes bridged by the Despia runtime. Web: RevenueCat Web Purchase Link.
 // Requires RevenueCat to be enabled in Despia (App > Settings > Integrations) + a rebuild.
 import despia from 'despia-native'
+import { raceTimeout } from '@/lib/antiFreeze'
 import { appConfig } from '@/config/app-config'
 
 const ua = navigator.userAgent.toLowerCase()
@@ -11,7 +12,8 @@ export const isDespia = ua.includes('despia')
 // Only reflects native purchases — web purchases won't show up here.
 export async function checkEntitlements() {
   if (!isDespia) return []
-  const data = await despia('getpurchasehistory://', ['restoredData'])
+  // Anti-freeze: resolves [] after 2s if the bridge never answers.
+  const data = await raceTimeout(despia('getpurchasehistory://', ['restoredData']), null)
   return (data?.restoredData ?? []).filter((p) => p.isActive).map((p) => p.entitlementId)
 }
 

@@ -61,6 +61,15 @@ This app runs inside a Despia native shell with 50+ native capabilities (push, b
 
 **Rule:** before implementing ANY Despia native feature, **fetch https://setup.despia.com** (or its machine index https://setup.despia.com/llms.txt) and confirm the exact `despia(...)` bridge command + setup. Never guess Despia APIs from memory — the live docs are the source of truth.
 
+## Native Bridge Calls — Never Freeze the UI (read before awaiting `despia(...)`)
+
+**Read `ANTI_FREEZE.md`** before awaiting any `despia(...)` call. The bridge has
+no guaranteed callback — a dead call hangs 15–30s. Summary: wrap every awaited
+result in `raceTimeout(call, fallback)` (2s cap, prefer wrapping inside the lib
+module); cap button busy states with `withCappedBusy(setBusy, task)` (busy ≤2s
+hard-coded, work continues in the background); fire-and-forget calls are never
+awaited; timeout fallbacks mean "unknown", never fake success.
+
 ## Base44 References
 
 - CLI overview: https://docs.base44.com/developers/references/cli/get-started/overview.md

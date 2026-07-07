@@ -3,6 +3,7 @@ import { Trash2, ShieldAlert } from 'lucide-react'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import * as customAuth from '@/lib/customAuth'
 import { confirmWithLockedVault } from '@/lib/biometricConfirm'
+import { withCappedBusy } from '@/lib/antiFreeze'
 import { isNative } from '@/lib/deviceAuth'
 import { haptics } from '@/lib/haptics'
 import DeleteConfirmStep from '@/components/account/DeleteConfirmStep'
@@ -35,18 +36,21 @@ export default function DeleteAccountDrawer({ open, onOpenChange, account, onDel
     }
   }
 
-  const handleBiometric = async () => {
+  // Anti-freeze (ANTI_FREEZE.md): busy state is capped at 2s — if the native
+  // bridge never answers the button recovers, while the biometric prompt keeps
+  // running in the background and still completes the deletion on success.
+  const handleBiometric = () => {
     setError('')
-    setBusy(true)
     haptics.heavy?.()
-    const ok = await confirmWithLockedVault()
-    if (!ok) {
-      haptics.error?.()
-      setError('Biometric confirmation failed — please try again.')
-      setBusy(false)
-      return
-    }
-    await doDelete()
+    withCappedBusy(setBusy, async () => {
+      const ok = await confirmWithLockedVault()
+      if (!ok) {
+        haptics.error?.()
+        setError('Biometric confirmation failed — please try again.')
+        return
+      }
+      await doDelete()
+    })
   }
 
   const handleTypeConfirm = async () => {

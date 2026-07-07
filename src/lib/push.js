@@ -2,6 +2,7 @@
 // Despia registers the device with OneSignal at app launch; we link that device
 // to our Account id so the backend can target users with include_external_user_ids.
 import despia from 'despia-native'
+import { raceTimeout } from '@/lib/antiFreeze'
 import { invokeAuth } from '@/lib/customAuth'
 
 const ua = navigator.userAgent.toLowerCase()
@@ -15,8 +16,9 @@ export function linkPushUser(userId) {
 // true / false on native; null on web (push only works in the native app).
 export async function checkPushPermission() {
   if (!isDespia) return null
-  const result = await despia('checkNativePushPermissions://', ['nativePushEnabled'])
-  return !!result?.nativePushEnabled
+  // Anti-freeze: resolves null (unknown) after 2s if the bridge never answers.
+  const result = await raceTimeout(despia('checkNativePushPermissions://', ['nativePushEnabled']), null)
+  return result ? !!result.nativePushEnabled : null
 }
 
 // Open the device settings app so the user can enable notifications.

@@ -3,13 +3,17 @@
 // successful Face ID / Touch ID / device-passcode prompt — so we write a
 // one-time nonce locked, then read it: a matching read IS the confirmation.
 import despia from 'despia-native'
+import { raceTimeout } from '@/lib/antiFreeze'
 
 const KEY = 'confirm_action_nonce'
 
 export async function confirmWithLockedVault() {
   const nonce = `${Date.now()}-${Math.random().toString(36).slice(2)}`
   try {
-    await despia(`setvault://?key=${KEY}&value=${encodeURIComponent(nonce)}&locked=true`)
+    // Anti-freeze: cap the nonce write. The locked READ below is intentionally
+    // NOT capped — it shows a system Face ID prompt the user may answer slowly;
+    // callers cap the button busy state instead (withCappedBusy, ANTI_FREEZE.md).
+    await raceTimeout(despia(`setvault://?key=${KEY}&value=${encodeURIComponent(nonce)}&locked=true`))
     // Reading a locked key triggers the system biometric prompt.
     const data = await despia(`readvault://?key=${KEY}`, [KEY])
     const value = data?.[KEY] ? decodeURIComponent(data[KEY]) : null

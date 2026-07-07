@@ -83,6 +83,7 @@ Every entity ships with a **deny-all RLS block** — zero direct client database
 | `src/ACCESSIBILITY.md` | Accessibility standard & checklist |
 | `DB_SECURITY.md` | Deny-all RLS and data-access rules |
 | `PUSH_NOTIFICATIONS.md` | Push setup and sending |
+| `ANTI_FREEZE.md` | Never-block-the-UI rules for native bridge calls |
 | `src/DESPIA_NATIVE.md` | Working with Despia native features |
 
 > ℹ️ **Keep the Base44 setup below intact.** This project runs *on* Base44 — the CLI, config, and hosted-backend steps are how you run, edit, and publish it.
