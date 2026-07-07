@@ -1,5 +1,6 @@
 // Send push notifications via OneSignal (device registration is handled by Despia).
 // Targets: 'self' (any logged-in user — test pushes), 'user' (admin → one user),
+// 'users' (admin → several users), 'tag' (admin → tag-based segment),
 // 'all' (admin → every subscribed device). Devices are linked to Account ids via
 // setonesignalplayerid:// on the client, so we target with include_external_user_ids.
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
@@ -43,7 +44,11 @@ Deno.serve(async (req) => {
     const oneSignalRestKey = Deno.env.get('ONESIGNAL_REST_API_KEY') || '';
 
     const body = await req.json();
-    const { token, target = 'self', user_id, title, message, path } = body;
+    const {
+      token, target = 'self', user_id, user_ids, tag,
+      title, message, path, url, metadata,
+      send_after, delivery_time_of_day, badge,
+    } = body;
     if (!token) return Response.json({ error: 'Unauthorized' }, { status: 401 });
     if (!title || !message) return Response.json({ error: 'Missing title or message' }, { status: 400 });
     if (!oneSignalAppId || !oneSignalRestKey) {
@@ -68,14 +73,40 @@ Deno.serve(async (req) => {
       headings: { en: title },
       contents: { en: message },
     };
-    // Optional deep link: Despia routes the app to this path on notification tap.
-    if (path) notification.data = { path };
+
+    // Deep linking (Despia): path → History API navigation on tap (no reload),
+    // url → full WebView reload, metadata → delivered to window.onNotificationEvent.
+    const data = {};
+    if (path) data.path = path;
+    if (url) data.url = url;
+    if (metadata !== undefined) data.metadata = metadata;
+    if (Object.keys(data).length) notification.data = data;
+
+    // Scheduling: send_after = absolute UTC time; delivery_time_of_day = each
+    // user's local time (e.g. "9:00AM").
+    if (send_after) notification.send_after = send_after;
+    if (delivery_time_of_day) {
+      notification.delayed_option = 'timezone';
+      notification.delivery_time_of_day = delivery_time_of_day;
+    }
+
+    // iOS badge: { type: 'Increase' | 'SetTo' | 'None', count }.
+    if (badge) {
+      notification.ios_badgeType = badge.type || 'Increase';
+      notification.ios_badgeCount = badge.count ?? 1;
+    }
 
     if (target === 'all') {
       notification.included_segments = ['Subscribed Users'];
     } else if (target === 'user') {
       if (!user_id) return Response.json({ error: 'Missing user_id' }, { status: 400 });
       notification.include_external_user_ids = [user_id];
+    } else if (target === 'users') {
+      if (!Array.isArray(user_ids) || !user_ids.length) return Response.json({ error: 'Missing user_ids' }, { status: 400 });
+      notification.include_external_user_ids = user_ids;
+    } else if (target === 'tag') {
+      if (!tag?.key) return Response.json({ error: 'Missing tag key' }, { status: 400 });
+      notification.filters = [{ field: 'tag', key: tag.key, relation: tag.relation || '=', value: String(tag.value ?? '') }];
     } else {
       notification.include_external_user_ids = [caller.id];
     }

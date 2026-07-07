@@ -39,11 +39,21 @@ Notification tap             data.path → Despia updates the URL via History AP
 
 ## Adding a new push use case
 
-**From the frontend** (as the logged-in user, self only unless admin):
+**From the frontend** (`src/lib/push.js` wrappers; self is any user, the rest admin only):
 
 ```js
-import { sendPush } from '@/lib/push'
-await sendPush({ target: 'self', title: 'Hi', message: 'Body', path: '/somewhere' })
+import { sendPushToSelf, sendPushToUser, sendPushToUsers, sendPushToAll, sendPushToTag, setPushTags } from '@/lib/push'
+
+await sendPushToSelf({ title: 'Hi', message: 'Body', path: '/somewhere' })
+await sendPushToUser(accountId, { title: 'Hi', message: 'Body' })
+await sendPushToUsers([id1, id2], { title: 'Hi', message: 'Body' })
+await sendPushToAll({ title: 'Hi', message: 'Body', deliveryTimeOfDay: '9:00AM' })   // each user's local 9am
+await sendPushToTag({ key: 'plan', value: 'premium' }, { title: 'Hi', message: 'Body' })
+await setPushTags({ plan: 'premium' })            // tag yourself (segments); admins can pass a userId
+
+// Shared options: title, message, path (in-app route on tap), url (full reload),
+// metadata (delivered to window.onNotificationEvent), sendAfter (UTC),
+// deliveryTimeOfDay (local time), badge ({ type: 'Increase'|'SetTo'|'None', count }).
 ```
 
 **From another backend function** (server-triggered, any user) — call OneSignal directly:
