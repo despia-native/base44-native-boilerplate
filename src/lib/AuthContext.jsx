@@ -4,7 +4,21 @@ import * as customAuth from '@/lib/customAuth';
 import { useFocusEvents } from '@/hooks/useFocusEvents';
 import { linkPushUser } from '@/lib/push';
 
-const AuthContext = createContext();
+// Safe default: the provider is guaranteed at the app root (App.jsx), so a
+// missing context only ever happens transiently (e.g. Vite HMR re-instantiating
+// this module while the mounted provider is from the old copy). Throwing there
+// crashed the entire app — an inert "still loading" default degrades gracefully
+// and self-heals on the next full render.
+const defaultAuth = {
+  user: null,
+  isAuthenticated: false,
+  isLoadingAuth: true,
+  authChecked: false,
+  logout: () => {},
+  checkUserAuth: async () => {},
+};
+
+const AuthContext = createContext(defaultAuth);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -66,10 +80,4 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
+export const useAuth = () => useContext(AuthContext);
