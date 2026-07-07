@@ -1,6 +1,10 @@
 # Base44 Mobile App Starter Project (Store Compliant)
 
-A production-grade starter for shipping **real native iOS/Android apps** built on [Base44](https://base44.com) and packaged with [Despia](https://despia.com). It's not just an auth template — it's a complete, App Store / Play Store–compliant foundation: native-feel UI system, custom JWT authentication with guest mode, account deletion, push notifications, premium subscriptions, an admin panel, and hardened database security.
+A production-grade **mobile app starter template** and **boilerplate** for shipping **real native iOS and Android apps** — built with **React, Vite, and Tailwind CSS** on the [Base44](https://base44.com) **no-code / low-code backend** (serverless functions, database, auth, email) and packaged as a native app with [Despia](https://despia.com) (a **web-to-app / WebView-to-native converter** with OTA updates and a native bridge).
+
+This is not just an authentication template — it's a complete, **App Store and Google Play Store compliant** foundation for launching a **hybrid mobile app** fast: a native-feel **iOS-style UI kit**, **custom JWT authentication** with Google Sign-In, Sign in with Apple and **guest login**, in-app **account deletion**, **push notifications**, **in-app purchases / premium subscriptions (RevenueCat)**, an **admin dashboard**, and hardened **database security (row-level security)**.
+
+Perfect for indie hackers, startups, and agencies building an **MVP mobile app**, converting a **web app to a native app**, publishing a **React app to the App Store**, or launching a **SaaS mobile client** without writing Swift or Kotlin.
 
 **📖 Start here:**
 - [`TEMPLATE_SETUP.md`](./src/TEMPLATE_SETUP.md) — the checklist to make this app yours (config, secrets, external accounts).
@@ -27,15 +31,15 @@ Everything Apple and Google review teams commonly reject hybrid apps for is alre
 
 ## 📱 What's Included
 
-### Native-first UI system
-- App shell with no body scroll, dedicated scroll containers, and safe-area handling (Despia-injected + `env()` fallback).
-- **Ember design system**: token-driven light/dark themes, convex glass materials, one accent action per screen (`src/index.css`).
-- iOS-style navigation: spring push/pop page transitions, edge swipe-back, static tab-root switching, floating glass header + tab bar (`src/components/AnimatedRoutes.jsx`, `src/components/mobile/`).
-- Native bottom sheets (vaul) with spring easing, animated height, and iOS grabber.
-- Haptics, tap-scale feedback, reduced-motion support.
+### Native-first UI system (iOS-style design kit)
+- **Native app look and feel** in a WebView: app shell with no body scroll, dedicated scroll containers, and **safe-area / notch handling** (Despia-injected + `env()` fallback).
+- **Ember design system**: token-driven **dark mode / light mode themes**, glassmorphism materials, one accent action per screen (`src/index.css`).
+- **iOS-style navigation**: spring push/pop **page transitions**, edge **swipe-back gesture**, static tab-root switching, floating **liquid-glass header + bottom tab bar** (`src/components/AnimatedRoutes.jsx`, `src/components/mobile/`).
+- Native **bottom sheets / drawers** (vaul) with spring easing, animated height, and iOS grabber.
+- **Haptic feedback**, tap-scale press states, reduced-motion support — **smooth 60fps animations** tuned for WKWebView and Android WebView.
 
 ### Authentication — fully custom, not Base44 login
-This app does **not** use Base44's built-in login or `base44.auth` sessions. Auth is entirely self-owned:
+A complete **mobile authentication system**: **social login (Google OAuth + Sign in with Apple)**, **email/password login**, **passwordless guest mode**, and **secure JWT session management**. This app does **not** use Base44's built-in login or `base44.auth` sessions. Auth is entirely self-owned:
 - Users live in the **`Account` entity**; sessions are app-signed **HS256 JWTs** (`JWT_SECRET`).
 - Sign-in methods: **email/password, Google (native OAuth via Despia's `oauth://` bridge), Apple, and automatic anonymous device accounts** (guest mode).
 - Guest → real account upgrading, multi-account switcher, saved accounts, password reset via email (Resend), account linking.
@@ -57,11 +61,11 @@ Full flows and security practices: [`JWT_AUTH.md`](./JWT_AUTH.md).
 
 In a plain browser the app still runs (web preview); native-only features gracefully fall back.
 
-### Premium subscriptions
-RevenueCat-backed in-app purchases with a `PremiumContext` provider and paywall-ready UI section — purchases stay tied to the device/account per store rules.
+### Premium subscriptions & monetization
+**RevenueCat in-app purchases** for **app monetization**: subscription billing, a `PremiumContext` provider, and **paywall-ready UI** — purchases stay tied to the device/account per Apple and Google store rules.
 
-### Admin panel
-Role-gated admin pages: user management with stats and login charts (`/admin/users`), and a push-notification composer (`/admin/push`).
+### Admin panel / dashboard
+Role-gated **admin dashboard** pages: **user management** with analytics, stats and login charts (`/admin/users`), and a **push-notification composer** for targeted push campaigns (`/admin/push`).
 
 ### Database security
 Every entity ships with a **deny-all RLS block** — zero direct client database access. All reads/writes flow through backend functions that verify the app JWT and use the service role. Rules and checklist: [`DB_SECURITY.md`](./DB_SECURITY.md).
@@ -80,6 +84,10 @@ Every entity ships with a **deny-all RLS block** — zero direct client database
 | `DB_SECURITY.md` | Deny-all RLS and data-access rules |
 | `PUSH_NOTIFICATIONS.md` | Push setup and sending |
 | `src/DESPIA_NATIVE.md` | Working with Despia native features |
+
+## 🔑 Keywords
+
+`mobile app starter` · `react native alternative` · `webview app template` · `web to app converter` · `ios app boilerplate` · `android app boilerplate` · `app store compliant template` · `react mobile app template` · `vite tailwind starter` · `jwt authentication template` · `google sign in webview` · `sign in with apple` · `guest login` · `push notifications webview` · `revenuecat subscription starter` · `in-app purchases hybrid app` · `pwa to native app` · `no-code backend` · `base44 template` · `despia app` · `hybrid app boilerplate` · `saas mobile starter kit` · `admin dashboard template` · `dark mode ui kit` · `ios design system`
 
 > ℹ️ **Keep the Base44 setup below intact.** This project runs *on* Base44 — the CLI, config, and hosted-backend steps are how you run, edit, and publish it.
 
