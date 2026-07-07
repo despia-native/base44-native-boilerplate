@@ -14,7 +14,8 @@ import { TABS, PUBLIC_PATHS, ALIASES } from '@/config/navigation'
 //    to -30% and dims underneath (UINavigationController push).
 //  • back  — old page slides off to the right ON TOP; the previous page slides
 //    back from -30% underneath (UINavigationController pop).
-//  • tab   — switching between tab-bar roots crossfades (UITabBarController).
+//  • tab   — switching between tab-bar roots is STATIC (instant swap): the
+//    persistent chrome and main navigation never animate.
 const pageVariants = {
   initial: (dir) =>
     dir === 'tab' ? { opacity: 0, x: 0, zIndex: 1 }
@@ -42,12 +43,20 @@ export default function AnimatedRoutes() {
   // so the header and tab bar stay perfectly still while pages swipe under them.
   const tabPage = TAB_TITLES[location.pathname]
 
+
   // Direction: browser/gesture back = pop; tab-root ↔ tab-root = fade; else push.
   const prevPathRef = useRef(location.pathname)
   const prevPath = prevPathRef.current
   let direction = navType === 'POP' ? 'back' : 'push'
   if (TAB_TITLES[prevPath] && TAB_TITLES[location.pathname]) direction = 'tab'
   useEffect(() => { prevPathRef.current = location.pathname }, [location.pathname])
+
+  // Spring physics for push/back (fluid, native settle); tab roots swap
+  // instantly so the main navigation stays static. Reduce Motion → short fade.
+  const transition =
+    direction === 'tab' ? { duration: 0 }
+    : reduceMotion ? { duration: 0.15 }
+    : { type: 'spring', stiffness: 400, damping: 42, mass: 1 }
 
   return (
     <div className="relative flex-1 min-h-0 flex flex-col overflow-hidden">
@@ -65,7 +74,7 @@ export default function AnimatedRoutes() {
         // Mode jank; framer-motion promotes the layer only while animating.
         // The edge shadow blur is kept small — it rasterizes with the layer.
         style={{ boxShadow: '-0.5rem 0 1.25rem rgba(0,0,0,.16)' }}
-        transition={reduceMotion ? { duration: 0.15 } : { duration: 0.35, ease: [0.32, 0.72, 0, 1] }}
+        transition={transition}
       >
         {/* Native edge swipe-back on every page EXCEPT the menu-bar roots */}
         <SwipeBack enabled={!tabPage}>

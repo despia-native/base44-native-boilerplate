@@ -528,6 +528,15 @@
   }
   @keyframes ember-tag-in { from { scale: .6; opacity: 0; } }
 
+  /* Spring easing for bottom sheets (vaul drawers) — replaces vaul's default
+     ease-out with a gentle overshoot-and-settle on open/close/snap. !important
+     wins over vaul's inline transition; drag tracking stays instant because
+     vaul sets `transition: none` (property none → nothing animates). */
+  [data-vaul-drawer],
+  [vaul-drawer] {
+    transition-timing-function: cubic-bezier(.34, 1.3, .4, 1) !important;
+  }
+
   /* Bottom-sheet entrance with upward overshoot (kit .sheet) */
   .animate-sheet-in {
     animation: ember-sheet-in .5s both;
