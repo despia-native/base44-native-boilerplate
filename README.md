@@ -1,44 +1,87 @@
-# Despia Native Auth Template (on Base44)
+# Base44 Mobile App Starter Project (Store Compliant)
 
-This codebase is a **working template for a fully custom authentication system**: native Google Sign-In inside a [Despia](https://despia.com) WebView app, plus your own JWT sessions — all running on [Base44](https://base44.com)'s serverless backend (Deno functions + entities + email).
-
-Instead of Base44's built-in `base44.auth`, this app owns its entire auth stack: users live in a normal `Account` entity you control, sessions are your own signed JWTs, and Google login works natively in Despia via the `oauth://` bridge. You still get Base44's zero-ops backend and database.
+A production-grade starter for shipping **real native iOS/Android apps** built on [Base44](https://base44.com) and packaged with [Despia](https://despia.com). It's not just an auth template — it's a complete, App Store / Play Store–compliant foundation: native-feel UI system, custom JWT authentication with guest mode, account deletion, push notifications, premium subscriptions, an admin panel, and hardened database security.
 
 **📖 Start here:**
-- [`TEMPLATE_SETUP.md`](./src/TEMPLATE_SETUP.md) — the checklist of what to change to make this app yours (3 spots: config, secrets, external accounts).
-- [`DESPIA_OAUTH.md`](./src/DESPIA_OAUTH.md) — the full mental model and how Despia, Base44, and Google fit together.
-- [`JWT_AUTH.md`](./JWT_AUTH.md) — **the authentication system.** Custom JWT sessions, the `Account` entity, password hashing, Google/Apple/device sign-in, and the guest session model. This is the single source of truth for auth.
+- [`TEMPLATE_SETUP.md`](./src/TEMPLATE_SETUP.md) — the checklist to make this app yours (config, secrets, external accounts).
+- [`DESIGN_GUIDELINES.md`](./src/DESIGN_GUIDELINES.md) — the mandatory native-first UI system (app shell, materials, motion).
+- [`JWT_AUTH.md`](./JWT_AUTH.md) — the custom authentication system (single source of truth for auth).
+- [`DESPIA_OAUTH.md`](./src/DESPIA_OAUTH.md) — how Despia, Base44, and Google OAuth fit together.
 
 ---
 
-## 🧩 Main dependency: Despia
+## ✅ Store Compliance Built In
 
-**[Despia](https://despia.com) is the primary runtime dependency of this app.** The app is built to run inside Despia's native iOS/Android WebView shell, and several core features only work there:
+Everything Apple and Google review teams commonly reject hybrid apps for is already handled:
 
-| Feature | Despia mechanism |
+| Requirement | How this starter satisfies it |
+|---|---|
+| **Sign in with Apple** (required when offering Google login on iOS) | Native Apple Sign-In (`appleSignIn`, `src/lib/appleAuth.js`) |
+| **Guest / loginless use** | Automatic anonymous device accounts — the app is always usable without forcing sign-up (`src/lib/deviceAuth.js`) |
+| **In-app account deletion** (App Store 5.1.1(v)) | Two-step delete flow with biometric (native) or typed (web) confirmation — `ACCOUNT_DELETION.md` |
+| **Native look & feel** (no "wrapped website" rejections) | Full native-first design system: no body scroll, safe areas, spring page transitions, iOS sheets, haptics — `DESIGN_GUIDELINES.md` |
+| **Performance in WebView** | GPU-only animations, rAF-batched DOM work, Low Power Mode–safe — `src/DOM_OPTIMIZATION.md` |
+| **Accessibility** | WCAG 2.1 AA with VoiceOver/TalkBack support throughout — `src/ACCESSIBILITY.md` |
+| **In-app purchases** | RevenueCat integration for premium subscriptions (`src/lib/revenuecat.js`, `src/lib/PremiumContext.jsx`) |
+| **Privacy / data security** | Deny-all RLS on every entity; all data access via authenticated backend functions — `DB_SECURITY.md` |
+
+## 📱 What's Included
+
+### Native-first UI system
+- App shell with no body scroll, dedicated scroll containers, and safe-area handling (Despia-injected + `env()` fallback).
+- **Ember design system**: token-driven light/dark themes, convex glass materials, one accent action per screen (`src/index.css`).
+- iOS-style navigation: spring push/pop page transitions, edge swipe-back, static tab-root switching, floating glass header + tab bar (`src/components/AnimatedRoutes.jsx`, `src/components/mobile/`).
+- Native bottom sheets (vaul) with spring easing, animated height, and iOS grabber.
+- Haptics, tap-scale feedback, reduced-motion support.
+
+### Authentication — fully custom, not Base44 login
+This app does **not** use Base44's built-in login or `base44.auth` sessions. Auth is entirely self-owned:
+- Users live in the **`Account` entity**; sessions are app-signed **HS256 JWTs** (`JWT_SECRET`).
+- Sign-in methods: **email/password, Google (native OAuth via Despia's `oauth://` bridge), Apple, and automatic anonymous device accounts** (guest mode).
+- Guest → real account upgrading, multi-account switcher, saved accounts, password reset via email (Resend), account linking.
+- Backend: `auth*`, `googleSignIn`, `appleSignIn`, `deviceSignIn` functions. Frontend: `src/lib/customAuth.js` + `src/lib/AuthContext.jsx`.
+- Required secrets: `JWT_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `RESEND_API_KEY`. (Any `sso_*` secrets are legacy leftovers and unused.)
+
+Full flows and security practices: [`JWT_AUTH.md`](./JWT_AUTH.md).
+
+### Native capabilities (via Despia)
+| Feature | Mechanism |
 |---|---|
 | Native Google Sign-In | `oauth://` bridge → secure in-app browser → deep link back (`myapp://oauth/auth`) |
 | Session persistence across reinstalls | Despia **Storage Vault** (`src/lib/tokenVault.js`) |
-| Anonymous guest accounts | Stable device UUID from the vault (`src/lib/deviceAuth.js`) |
+| Biometric confirmation | Locked vault read (`src/lib/biometricConfirm.js`) |
 | Push notifications | Despia push bridge (`src/lib/push.js`, `sendPush` function) |
 | Haptics | `despia-native` package (`src/lib/haptics.js`) |
 | Instant boot / offline / OTA updates | `@despia/local` Vite plugin — the web build is served from `http://localhost` on-device |
 | Safe areas / native chrome | `--safe-area-*` variables injected by the shell |
 
-Packages: **`despia-native`** (runtime bridge) and **`@despia/local`** (local-server build, wired in `vite.config.js`). In a plain browser the app still runs (web preview), but native-only features gracefully fall back.
+In a plain browser the app still runs (web preview); native-only features gracefully fall back.
 
-## 🔐 Authentication — fully custom, not Base44 login
+### Premium subscriptions
+RevenueCat-backed in-app purchases with a `PremiumContext` provider and paywall-ready UI section — purchases stay tied to the device/account per store rules.
 
-This app does **not** use Base44's built-in login, SSO, or `base44.auth` sessions. Authentication is entirely self-owned:
+### Admin panel
+Role-gated admin pages: user management with stats and login charts (`/admin/users`), and a push-notification composer (`/admin/push`).
 
-- Users live in the **`Account` entity**; sessions are our own **HS256 JWTs** signed with `JWT_SECRET`.
-- Sign-in methods: email/password, Google (native OAuth), Apple, and automatic anonymous device accounts.
-- Backend: the `auth*`, `googleSignIn`, `appleSignIn`, and `deviceSignIn` functions. Frontend: `src/lib/customAuth.js` + `src/lib/AuthContext.jsx`.
-- Required secrets: `JWT_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `RESEND_API_KEY`. Any `sso_*` secrets are legacy Base44-SSO leftovers and are **not used** — they can be deleted.
+### Database security
+Every entity ships with a **deny-all RLS block** — zero direct client database access. All reads/writes flow through backend functions that verify the app JWT and use the service role. Rules and checklist: [`DB_SECURITY.md`](./DB_SECURITY.md).
 
-Full details, flows, and security practices: [`JWT_AUTH.md`](./JWT_AUTH.md).
+## 🗂 Project Docs
 
-> ℹ️ **Keep the Base44 setup below intact.** This project runs *on* Base44 — the CLI, config, and hosted-backend steps are how you run, edit, and publish it. Removing them breaks the project.
+| Doc | Covers |
+|---|---|
+| `TEMPLATE_SETUP.md` | Per-project setup checklist |
+| `JWT_AUTH.md` | The complete auth system |
+| `DESPIA_OAUTH.md` | OAuth in WebViews, deep links, native bridge |
+| `ACCOUNT_DELETION.md` | Store-compliant deletion flow |
+| `DESIGN_GUIDELINES.md` | Native-first UI rules |
+| `src/DOM_OPTIMIZATION.md` | Animation & WebView performance rules |
+| `src/ACCESSIBILITY.md` | Accessibility standard & checklist |
+| `DB_SECURITY.md` | Deny-all RLS and data-access rules |
+| `PUSH_NOTIFICATIONS.md` | Push setup and sending |
+| `src/DESPIA_NATIVE.md` | Working with Despia native features |
+
+> ℹ️ **Keep the Base44 setup below intact.** This project runs *on* Base44 — the CLI, config, and hosted-backend steps are how you run, edit, and publish it.
 
 ---
 
