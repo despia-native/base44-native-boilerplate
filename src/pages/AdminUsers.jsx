@@ -53,7 +53,13 @@ export default function AdminUsers() {
   }
 
   const handleExport = () => {
-    const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`
+    const esc = (v) => {
+      let s = String(v ?? '')
+      // CSV injection guard: neutralize formula triggers (=, +, -, @) so
+      // spreadsheet apps treat user-supplied values as plain text.
+      if (/^[=+\-@]/.test(s)) s = `'${s}`
+      return `"${s.replace(/"/g, '""')}"`
+    }
     const headers = ['Full name', 'Email', 'Role', 'Email verified', 'Last login']
     const rows = accounts.map((a) => [
       esc(a.full_name), esc(a.email), esc(a.role),
