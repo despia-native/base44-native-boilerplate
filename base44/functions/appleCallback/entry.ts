@@ -45,7 +45,47 @@ Deno.serve(async (req) => {
     // Only relay to a sane custom scheme — this endpoint serves the native
     // deeplink handoff exclusively (iOS/web use the SDK popup, never this URL).
     if (!/^[a-z][a-z0-9+.-]*$/i.test(scheme)) {
-      return new Response('<!DOCTYPE html><html><body><p>Invalid sign-in state.</p></body></html>', {
+      // Direct browser visits (no Apple POST) land here — show a styled page too.
+      const invalidHtml = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="dark" />
+  <title>Sign-in callback</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      background: #0d0c10;
+      color: #f4f2ee;
+      font-family: ui-rounded, -apple-system, BlinkMacSystemFont, 'SF Pro Rounded', 'Segoe UI', Roboto, system-ui, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      -webkit-font-smoothing: antialiased;
+    }
+    .wrap { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 24px; }
+    .badge {
+      width: 52px; height: 52px; border-radius: 50%;
+      background: rgba(255,92,31,.12);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px;
+    }
+    h1 { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
+    p { font-size: 14px; color: rgba(244,242,238,.55); max-width: 280px; line-height: 1.45; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="badge">&#128274;</div>
+    <h1>Nothing to see here</h1>
+    <p>This page only handles Sign in with Apple redirects from the app. You can close this tab.</p>
+  </div>
+</body>
+</html>`;
+      return new Response(invalidHtml, {
         status: 400, headers: { 'Content-Type': 'text/html; charset=utf-8' },
       });
     }
