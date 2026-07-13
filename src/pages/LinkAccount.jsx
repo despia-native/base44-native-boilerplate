@@ -6,7 +6,9 @@ import { base44 } from '@/api/base44Client'
 import * as customAuth from '@/lib/customAuth'
 import { isNative } from '@/lib/deviceAuth'
 import { appConfig } from '@/config/app-config'
+import { signInWithApple } from '@/lib/appleAuth'
 import GoogleIcon from '@/components/GoogleIcon'
+import AppleIcon from '@/components/AppleIcon'
 
 // Upgrade an anonymous device account to a real login (email/password or Google)
 // while keeping all the data stored on the account.
@@ -41,6 +43,25 @@ export default function LinkAccount() {
       despia(`oauth://?url=${encodeURIComponent(url)}`)
     } else {
       window.location.href = url
+    }
+  }
+
+  const handleAppleLink = async () => {
+    setError('')
+    // Flag so the /auth callback (Android deeplink flow) links the Apple
+    // identity to THIS account instead of signing into a separate one.
+    localStorage.setItem('apple_link_mode', '1')
+    try {
+      const result = await signInWithApple()
+      if (!result) return // Android: linking continues via the deeplink → /auth flow
+      // iOS/web popup: we have the token right here — link directly.
+      localStorage.removeItem('apple_link_mode')
+      await customAuth.linkWithAppleToken(result.idToken, result.fullName)
+      window.location.href = '/account'
+    } catch (err) {
+      localStorage.removeItem('apple_link_mode')
+      if (err?.error === 'popup_closed_by_user') return
+      setError(err?.response?.data?.error || err?.message || 'Apple link failed')
     }
   }
 
@@ -119,10 +140,18 @@ export default function LinkAccount() {
 
           <button
             onClick={handleGoogleLink}
-            className="w-full h-14 flex items-center justify-center gap-3 rounded-full ember-glass ember-press active:scale-95 transition-transform text-[16px] font-semibold text-foreground mb-10"
+            className="w-full h-14 flex items-center justify-center gap-3 rounded-full ember-glass ember-press active:scale-95 transition-transform text-[16px] font-semibold text-foreground"
           >
             <GoogleIcon className="w-5 h-5" />
             Link with Google
+          </button>
+
+          <button
+            onClick={handleAppleLink}
+            className="w-full h-14 flex items-center justify-center gap-3 rounded-full ember-glass ember-press active:scale-95 transition-transform text-[16px] font-semibold text-foreground mb-10"
+          >
+            <AppleIcon className="w-5 h-5" />
+            Link with Apple
           </button>
         </div>
       </div>

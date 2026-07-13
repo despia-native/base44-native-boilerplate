@@ -83,6 +83,12 @@ export async function linkWithGoogleCode(google_code) {
   return establishSession(data);
 }
 
+// Link an anonymous device account to an Apple identity — keeps all account data.
+export async function linkWithAppleToken(apple_id_token, full_name = '') {
+  const data = await invoke('authLinkAccount', { apple_id_token, full_name });
+  return establishSession(data);
+}
+
 // Request a password reset email. Always resolves (backend hides whether the email exists).
 export async function requestPasswordReset(email) {
   await invoke('authRequestReset', { email, app_url: window.location.origin });

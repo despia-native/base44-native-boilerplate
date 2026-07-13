@@ -1,7 +1,7 @@
 // Custom auth — upgrade / link an anonymous device account to a real login.
-// Verifies the current (anonymous) session JWT, then attaches either
-// email+password credentials or a Google identity to the SAME Account record,
-// so all data created as a guest is preserved. Returns a fresh JWT.
+// Verifies the current (anonymous) session JWT, then attaches email+password
+// credentials, a Google identity, or an Apple identity to the SAME Account
+// record, so all data created as a guest is preserved. Returns a fresh JWT.
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 function b64url(bytes) {
@@ -48,13 +48,45 @@ async function hashPassword(password) {
   return `${toHex(salt)}:${toHex(bits)}`;
 }
 
+// Decode a base64url segment straight to bytes (for RS256 signature verification).
+function b64urlToBytes(input) {
+  const bin = fromB64url(input);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
+
+// Verify an Apple id_token: RS256 signature via Apple's public JWKS + iss/aud/exp claims.
+async function verifyAppleIdToken(idToken, clientId) {
+  const parts = idToken.split('.');
+  if (parts.length !== 3) throw new Error('Malformed Apple token');
+  const header = JSON.parse(fromB64url(parts[0]));
+  const payload = JSON.parse(fromB64url(parts[1]));
+
+  const jwksRes = await fetch('https://appleid.apple.com/auth/keys');
+  if (!jwksRes.ok) throw new Error('Could not fetch Apple signing keys');
+  const jwks = await jwksRes.json();
+  const jwk = (jwks.keys || []).find((k) => k.kid === header.kid);
+  if (!jwk) throw new Error('Unknown Apple signing key');
+
+  const key = await crypto.subtle.importKey('jwk', jwk, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['verify']);
+  const sig = b64urlToBytes(parts[2]);
+  const valid = await crypto.subtle.verify('RSASSA-PKCS1-v1_5', key, sig, new TextEncoder().encode(`${parts[0]}.${parts[1]}`));
+  if (!valid) throw new Error('Invalid Apple token signature');
+
+  if (payload.iss !== 'https://appleid.apple.com') throw new Error('Wrong token issuer');
+  if (payload.aud !== clientId) throw new Error('Token not issued for this app');
+  if (payload.exp < Math.floor(Date.now() / 1000)) throw new Error('Apple token expired');
+  return payload;
+}
+
 Deno.serve(async (req) => {
   try {
     if (req.method === 'OPTIONS') {
       return new Response(null, { status: 204, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, content-type' } });
     }
 
-    let { token, email, password, full_name, google_code } = await req.json();
+    let { token, email, password, full_name, google_code, apple_id_token } = await req.json();
     if (!token) return Response.json({ error: 'Not signed in' }, { status: 401 });
     // Defense: native layers sometimes re-encode the deep link, so the code can
     // arrive percent-encoded (4%2F0A…). Real Google codes never contain '%'.
@@ -78,7 +110,64 @@ Deno.serve(async (req) => {
 
     let updates;
 
-    if (google_code) {
+    if (apple_id_token) {
+      // ── Link with Apple (verified id_token, same model as appleSignIn) ───
+      const clientId = Deno.env.get('APPLE_SERVICES_ID') || 'com.yourcompany.yourapp.webauth';
+      let tokenInfo;
+      try {
+        tokenInfo = await verifyAppleIdToken(apple_id_token, clientId);
+      } catch (e) {
+        return Response.json({ error: e.message }, { status: 401 });
+      }
+      const appleSub = tokenInfo.sub;
+      // Apple emails (real or private relay) are Apple-verified — safe to merge by.
+      const cleanEmail = (tokenInfo.email || `apple-${appleSub}@apple.local`).toLowerCase().trim();
+
+      let existing = await base44.asServiceRole.entities.Account.filter({ apple_id: appleSub });
+      if (!existing?.length) {
+        existing = await base44.asServiceRole.entities.Account.filter({ email: cleanEmail });
+      }
+      if (existing?.length && existing[0].id !== account.id) {
+        // The Apple identity already belongs to a registered account — MERGE:
+        // move the device binding onto it, delete the anonymous account, and
+        // sign the user into the existing one.
+        const target = existing[0];
+        await base44.asServiceRole.entities.Account.update(target.id, {
+          device_id: account.device_id || target.device_id || '',
+          apple_id: target.apple_id || appleSub,
+          email_verified: true,
+          last_login_at: new Date().toISOString(),
+        });
+        // NOTE: if app entities ever reference the account id, re-point the
+        // anonymous account's records to target.id here before deleting.
+        await base44.asServiceRole.entities.Account.delete(account.id);
+
+        const mergedToken = await signJwt({ sub: target.id, email: target.email, role: target.role }, secret);
+        return Response.json({
+          token: mergedToken,
+          account: {
+            id: target.id,
+            email: target.email,
+            full_name: target.full_name,
+            role: target.role,
+            avatar_url: target.avatar_url || null,
+            email_verified: true,
+            is_anonymous: false,
+          },
+        });
+      }
+
+      updates = {
+        email: cleanEmail,
+        apple_id: appleSub,
+        full_name: account.full_name && account.full_name !== 'Guest'
+          ? account.full_name
+          : ((full_name || '').trim() || cleanEmail.split('@')[0]),
+        email_verified: tokenInfo.email_verified === true || tokenInfo.email_verified === 'true',
+        is_anonymous: false,
+        last_login_at: new Date().toISOString(),
+      };
+    } else if (google_code) {
       // ── Link with Google (authorization code flow) ────────────────────────
       // Exchange the single-use code server-side; identity comes from the
       // id_token, which arrives directly from Google over TLS (trusted as-is).

@@ -55,8 +55,12 @@ export default function Auth() {
       // (set by the "Protect your account" flow) instead of a fresh sign-in.
       const linkMode = localStorage.getItem('google_link_mode') === '1'
       localStorage.removeItem('google_link_mode')
+      const appleLinkMode = localStorage.getItem('apple_link_mode') === '1'
+      localStorage.removeItem('apple_link_mode')
       const authPromise = idToken
-        ? customAuth.loginWithAppleToken(idToken) // Apple (Android deeplink flow)
+        ? (appleLinkMode
+            ? customAuth.linkWithAppleToken(idToken) // Apple link (Android deeplink flow)
+            : customAuth.loginWithAppleToken(idToken)) // Apple sign-in (Android deeplink flow)
         : linkMode
           ? customAuth.linkWithGoogleCode(code)
           : customAuth.loginWithGoogleCode(code)
