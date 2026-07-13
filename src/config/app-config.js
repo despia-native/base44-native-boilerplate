@@ -30,7 +30,7 @@ export const appConfig = {
   // e.g. 'com.yourcompany.yourapp.webauth' — created in Apple Developer Console →
   // Identifiers → Services IDs. Must match the value in the appleSignIn and
   // appleAuthUrl backend functions (APPLE_SERVICES_ID secret or their fallback).
-  appleServicesId: 'com.yourcompany.yourapp.webauth',
+  appleServicesId: 'com.despia.myapp.appleauth',
 
   // 🔧 TEMPLATE: RevenueCat settings. Enable RevenueCat in the Despia Editor
   // (App > Settings > Integrations > RevenueCat) with your iOS + Android Public
