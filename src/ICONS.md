@@ -7,6 +7,13 @@ native on iOS. Generic icon sets (lucide etc.) are NOT used in app code.
 > Browse every available icon and its exact name: **https://framework7.io/icons/**
 > Names are lowercase with underscores, e.g. `person_crop_circle_fill`.
 
+**Source repo / official docs: https://github.com/framework7io/framework7-icons**
+Agents and maintainers should look up this repo for the authoritative docs,
+usage instructions, changelog, and the complete icon list — the full set of
+valid ligature names lives in the repo (see the `icons/` SVG folder and the
+font's codepoints), which is the reliable way to verify an icon name exists
+before using it.
+
 ---
 
 ## 1. How it works
