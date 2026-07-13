@@ -63,19 +63,63 @@ Deno.serve(async (req) => {
 <html>
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="dark" />
   <title>Signing you in…</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; }
+    body {
+      background: #0d0c10;
+      color: #f4f2ee;
+      font-family: ui-rounded, -apple-system, BlinkMacSystemFont, 'SF Pro Rounded', 'Segoe UI', Roboto, system-ui, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      -webkit-font-smoothing: antialiased;
+    }
+    .wrap { display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 24px; }
+    .spinner {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 3px solid rgba(255,255,255,.14);
+      border-top-color: #ff5c1f;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    h1 { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
+    p { font-size: 14px; color: rgba(244,242,238,.55); max-width: 260px; line-height: 1.45; }
+    #continue {
+      display: none;
+      margin-top: 8px;
+      padding: 14px 28px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, #ff7038, #f04e12);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      text-decoration: none;
+      box-shadow: inset 0 1px 1px rgba(255,255,255,.45), 0 8px 20px rgba(255,92,31,.28);
+    }
+    #continue:active { transform: scale(.96); }
+  </style>
 </head>
-<body style="margin:0;background:#0d0c10;color:#f4f2ee;font-family:-apple-system,sans-serif;text-align:center">
-  <p style="margin-top:42vh;font-size:15px">Signing you in…</p>
-  <p><a id="continue" style="display:none;color:#ff5c1f;font-size:16px;font-weight:600;text-decoration:none">Continue to app</a></p>
+<body>
+  <div class="wrap">
+    <div class="spinner" aria-hidden="true"></div>
+    <h1>Signing you in…</h1>
+    <p>Returning you to the app. If nothing happens, tap the button below.</p>
+    <a id="continue">Continue to app</a>
+  </div>
   <script>
     var deeplink = ${JSON.stringify(deeplink)};
     location.href = deeplink;
     // Custom schemes can require a user gesture — offer a tappable fallback.
     var btn = document.getElementById('continue');
     btn.href = deeplink;
-    btn.style.display = 'inline-block';
+    setTimeout(function () { btn.style.display = 'inline-block'; }, 800);
   </script>
 </body>
 </html>`;
