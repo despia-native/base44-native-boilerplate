@@ -20,16 +20,17 @@ export function readFromUrl() {
     hash.get('token') || hash.get('access_token')
   const idToken = query.get('id_token') || hash.get('id_token') // Apple
   const code = query.get('code') || hash.get('code') // Google auth-code flow
+  const fullName = query.get('full_name') || hash.get('full_name') // Apple first-auth name (Android form_post leg)
   const error = query.get('error') || hash.get('error')
-  return { token: token || null, idToken: idToken || null, code: code || null, error: error || null }
+  return { token: token || null, idToken: idToken || null, code: code || null, fullName: fullName || null, error: error || null }
 }
 
 // Called once at startup, before React mounts. Stashes any incoming token and
 // strips it from the URL so it isn't left lying around.
 export function captureIncomingToken() {
-  const { token, idToken, code, error } = readFromUrl()
+  const { token, idToken, code, fullName, error } = readFromUrl()
   if (token || idToken || code || error) {
-    try { sessionStorage.setItem(KEY, JSON.stringify({ token, idToken, code, error })) } catch { /* ignore */ }
+    try { sessionStorage.setItem(KEY, JSON.stringify({ token, idToken, code, fullName, error })) } catch { /* ignore */ }
     // Remove the sensitive params from the visible URL, keep the pathname.
     try {
       window.history.replaceState(null, '', window.location.pathname)
@@ -41,11 +42,11 @@ export function captureIncomingToken() {
 export function consumePendingToken() {
   try {
     const raw = sessionStorage.getItem(KEY)
-    if (!raw) return { token: null, idToken: null, code: null, error: null }
+    if (!raw) return { token: null, idToken: null, code: null, fullName: null, error: null }
     sessionStorage.removeItem(KEY)
     return JSON.parse(raw)
   } catch {
-    return { token: null, idToken: null, code: null, error: null }
+    return { token: null, idToken: null, code: null, fullName: null, error: null }
   }
 }
 

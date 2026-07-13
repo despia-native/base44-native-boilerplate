@@ -21,7 +21,7 @@ export default function Auth() {
   const handledRef = useRef(false)
 
   useEffect(() => {
-    const handleToken = ({ code, idToken }) => {
+    const handleToken = ({ code, idToken, fullName }) => {
       if (handledRef.current) return
       handledRef.current = true
       // Re-auth-and-delete mode: the user is confirming account deletion with
@@ -59,8 +59,8 @@ export default function Auth() {
       localStorage.removeItem('apple_link_mode')
       const authPromise = idToken
         ? (appleLinkMode
-            ? customAuth.linkWithAppleToken(idToken) // Apple link (Android deeplink flow)
-            : customAuth.loginWithAppleToken(idToken)) // Apple sign-in (Android deeplink flow)
+            ? customAuth.linkWithAppleToken(idToken, fullName || '') // Apple link (Android deeplink flow)
+            : customAuth.loginWithAppleToken(idToken, fullName || '')) // Apple sign-in (Android deeplink flow)
         : linkMode
           ? customAuth.linkWithGoogleCode(code)
           : customAuth.loginWithGoogleCode(code)
@@ -79,7 +79,7 @@ export default function Auth() {
 
     const tryExtract = () => {
       if (handledRef.current) return true
-      const { idToken, code, error } = extractFromUrl()
+      const { idToken, code, fullName, error } = extractFromUrl()
       if (error) {
         handledRef.current = true
         setStatus('Sign-in error: ' + error)
@@ -87,7 +87,7 @@ export default function Auth() {
         return true
       }
       if (code || idToken) {
-        handleToken({ code, idToken })
+        handleToken({ code, idToken, fullName })
         return true
       }
       return false

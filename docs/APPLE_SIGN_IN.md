@@ -20,7 +20,7 @@ with `JWT_SECRET` — Apple is only used to prove identity.
 |---|---|
 | **iOS (Despia)** | Apple JS SDK popup → native Face ID sheet → `id_token` returned in-page → `appleSignIn` function → our JWT |
 | **Web** | Apple JS SDK popup (browser window) → same as iOS |
-| **Android (Despia)** | No native sheet exists → `appleAuthUrl` builds an Apple URL → Chrome Custom Tabs (`oauth://` bridge) → Apple redirects to `native-callback.html` → deeplink back into the app → `/auth` page exchanges the `id_token` |
+| **Android (Despia)** | No native sheet exists → `appleAuthUrl` builds an Apple URL (`form_post`, name+email scopes) → Chrome Custom Tabs (`oauth://` bridge) → Apple POSTs the `id_token` to the `appleCallback` backend function → it returns a bridge page that deeplinks back into the app → `/auth` exchanges the `id_token` |
 
 Files involved:
 
@@ -32,7 +32,7 @@ Files involved:
 | `base44/functions/appleAuthUrl/entry.ts` | Builds the Apple authorize URL (Android flow) |
 | `base44/functions/authLinkAccount/entry.ts` | Links an Apple identity to an anonymous guest account (merges if it already exists) |
 | `base44/functions/authReauth/entry.ts` | Re-verifies the Apple identity before account deletion |
-| `public/native-callback.html` | Relay page: catches Apple's redirect, deeplinks the token back into the native app |
+| `base44/functions/appleCallback/entry.ts` | Return URL endpoint (Android): accepts Apple's `form_post`, returns a bridge page that deeplinks the token (+ first-auth name/email) back into the native app. `public/native-callback.html` is now Google-only. |
 | `src/pages/Auth.jsx` | Handles the deeplinked token (sign-in, link mode, re-auth-delete mode) |
 | `index.html` | Loads the Apple JS SDK (`appleid.auth.js`) |
 
@@ -57,13 +57,15 @@ Files involved:
    - **Domains and Subdomains:**
      ```
      despia-connect-go.base44.app
+     app.base44.com
      ```
    - **Return URLs** (comma-delimited, `https://` required, no wildcards):
      ```
-     https://despia-connect-go.base44.app/,https://despia-connect-go.base44.app/native-callback.html
+     https://despia-connect-go.base44.app/,https://app.base44.com/api/apps/6a455bf21d244a918b73cdde/functions/appleCallback
      ```
-     - `…/` → used by the Apple JS SDK popup (iOS + web).
-     - `…/native-callback.html` → used by the Android Chrome Custom Tabs flow.
+     - `…despia-connect-go.base44.app/` → used by the Apple JS SDK popup (iOS + web).
+     - `…/functions/appleCallback` → used by the Android Chrome Custom Tabs flow
+       (Apple `form_post`s the `id_token` there; the function deeplinks it back).
 4. Click **Done → Continue → Save**.
 
 > **Custom domain?** If you publish the app on your own domain later, come back
@@ -82,7 +84,7 @@ calls such as token revocation. Skip it for now.
 | Secret | Value | Required |
 |---|---|---|
 | `APPLE_SERVICES_ID` | The Services ID from Step 2.2 (e.g. `com.yourcompany.yourapp.webauth`) | ✅ Yes |
-| `APP_BASE_URL` | Your app's public URL, e.g. `https://despia-connect-go.base44.app` (no trailing slash) | Recommended (Android flow falls back to the template default otherwise) |
+| `APP_BASE_URL` | Your app's public URL, e.g. `https://despia-connect-go.base44.app` (no trailing slash) | No longer used by the Apple flow (the Android return URL is the `appleCallback` function) — still used elsewhere (e.g. password-reset links) |
 | `JWT_SECRET` | ≥32 random characters — already set for this template's auth | ✅ Yes (already set) |
 
 ---
@@ -134,9 +136,11 @@ The Apple JS SDK is already loaded in `index.html`:
   user's name on the **first sign-in only** — Apple never sends it again), then
   calls the `appleSignIn` function which verifies the token and returns our JWT.
 - **Android:** `signInWithApple()` calls `appleAuthUrl`, opens Chrome Custom
-  Tabs. Apple redirects to `native-callback.html`, which deeplinks
-  `scheme://oauth/auth?id_token=…` back into the WebView. `/auth` picks it up
-  and calls `appleSignIn`.
+  Tabs. Apple `form_post`s the `id_token` (plus the user's name on the FIRST
+  auth) to the `appleCallback` backend function, which returns a bridge page
+  deeplinking `scheme://oauth/auth?id_token=…&full_name=…` back into the
+  WebView. `/auth` picks it up and calls `appleSignIn` — so Android gets the
+  same name/email result as the iOS/web popup.
 
 Account matching in `appleSignIn`: lookup by `apple_id` (Apple `sub`) first,
 then by email — so an existing email account gets Apple linked to it instead of
