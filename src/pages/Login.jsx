@@ -245,8 +245,11 @@ export default function Login() {
         savedAccounts={savedAccounts}
         onSelectSaved={(a) => { setPickerOpen(false); handleSavedAccount(a) }}
         onRemoveSaved={handleRemoveSaved}
-        onGoogle={() => { setPickerOpen(false); handleGoogleSignIn() }}
-        onApple={() => { setPickerOpen(false); handleAppleSignIn() }}
+        // Drawer stays open during Google/Apple so its 2s button loader is
+        // visible — the OAuth sheet/browser opens over it, and successful
+        // sign-in navigates away (unmounting the drawer).
+        onGoogle={handleGoogleSignIn}
+        onApple={handleAppleSignIn}
         onEmail={() => { setPickerOpen(false); navigate('/login/email', { state: location.state }) }}
       />
     </div>

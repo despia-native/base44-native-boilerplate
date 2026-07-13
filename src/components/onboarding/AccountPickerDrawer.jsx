@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import F7Icon from '@/components/F7Icon'
 import AppleIcon from '@/components/AppleIcon'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
@@ -11,6 +12,14 @@ export default function AccountPickerDrawer({
   onSelectSaved, onRemoveSaved,
   onGoogle, onApple, onEmail,
 }) {
+  // Same tap feedback as the Login page buttons: spinner on the tapped
+  // provider for 2s, hardcoded, no state check (see docs/CROSS_CODEBASE_EDITS.md).
+  const [btnLoading, setBtnLoading] = useState('')
+  const flash = (which, cb) => {
+    setBtnLoading(which)
+    setTimeout(() => setBtnLoading(''), 2000)
+    cb()
+  }
   const option = 'w-full h-13 min-h-[52px] flex items-center justify-center gap-3 rounded-full ember-glass ember-press active:scale-95 transition-transform text-[15px] font-semibold text-foreground'
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
@@ -36,11 +45,19 @@ export default function AccountPickerDrawer({
           <p className="px-1 pt-1 text-[12px] font-semibold uppercase tracking-wider text-muted-foreground">
             Or sign in with
           </p>
-          <button type="button" onClick={onGoogle} className={option}>
-            <GoogleIcon className="w-5 h-5" /> Google
+          <button type="button" disabled={btnLoading === 'google'} onClick={() => flash('google', onGoogle)} className={option}>
+            {btnLoading === 'google' ? (
+              <span className="ember-spinner" aria-label="Loading" />
+            ) : (
+              <><GoogleIcon className="w-5 h-5" /> Google</>
+            )}
           </button>
-          <button type="button" onClick={onApple} className={option}>
-            <AppleIcon className="w-5 h-5" /> Apple
+          <button type="button" disabled={btnLoading === 'apple'} onClick={() => flash('apple', onApple)} className={option}>
+            {btnLoading === 'apple' ? (
+              <span className="ember-spinner" aria-label="Loading" />
+            ) : (
+              <><AppleIcon className="w-5 h-5" /> Apple</>
+            )}
           </button>
           <button type="button" onClick={onEmail} className={option}>
             <F7Icon name="envelope_fill" size={19} /> Email
