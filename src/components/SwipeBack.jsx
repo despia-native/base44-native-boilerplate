@@ -11,6 +11,7 @@
 // will-change is applied only WHILE the gesture is live, never permanently.
 import { useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { navMotion } from '@/lib/navMotion'
 
 const EDGE = 28 // gesture must start within this many px of the left edge
 
@@ -82,7 +83,9 @@ export default function SwipeBack({ enabled = true, children }) {
         el.style.transition = 'transform .18s ease-out'
         el.style.transform = `translate3d(${window.innerWidth}px,0,0)`
       }
-      setTimeout(() => navigate(-1), 160)
+      // Tell the router the exit was already animated by the finger — it will
+      // swap pages instantly instead of replaying a second slide (flash fix).
+      setTimeout(() => { navMotion.swipeBack = true; navigate(-1) }, 170)
       endGesture(el)
     } else if (el) {
       // Cancel: spring back into place.

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useRef } from 'react'
 import { Routes, Route, Navigate, useLocation, useNavigationType } from 'react-router-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import PageNotFound from '@/lib/PageNotFound'
@@ -7,6 +7,7 @@ import GlassHeader from '@/components/mobile/GlassHeader'
 import GlassTabBar from '@/components/mobile/GlassTabBar'
 import SwipeBack from '@/components/SwipeBack'
 import { pages, componentFor } from '@/lib/pageRoutes'
+import { navMotion } from '@/lib/navMotion'
 import { TABS, PUBLIC_PATHS, ALIASES } from '@/config/navigation'
 
 // Native iOS navigation transitions, direction-aware:
@@ -16,15 +17,17 @@ import { TABS, PUBLIC_PATHS, ALIASES } from '@/config/navigation'
 //    back from -30% underneath (UINavigationController pop).
 //  • tab   — switching between tab-bar roots is STATIC (instant swap): the
 //    persistent chrome and main navigation never animate.
+//  • swipe — the gesture already slid the old page off-screen, so the router
+//    swaps instantly: no second animation, no flash.
 const pageVariants = {
   initial: (dir) =>
-    dir === 'tab' ? { opacity: 0, x: 0, zIndex: 1 }
+    dir === 'tab' || dir === 'swipe' ? { opacity: dir === 'tab' ? 0 : 1, x: 0, zIndex: 1 }
     : dir === 'back' ? { x: '-30%', opacity: 0.85, zIndex: 0 }
     : { x: '100%', opacity: 1, zIndex: 2 },
   animate: { x: 0, opacity: 1 },
   exit: (dir) =>
     dir === 'tab' ? { opacity: 0, x: 0, zIndex: 0 }
-    : dir === 'back' ? { x: '100%', opacity: 1, zIndex: 2 }
+    : dir === 'back' || dir === 'swipe' ? { x: '100%', opacity: 1, zIndex: 2 }
     : { x: '-30%', opacity: 0.85, zIndex: 0 },
 }
 
@@ -44,23 +47,43 @@ export default function AnimatedRoutes() {
   const tabPage = TAB_TITLES[location.pathname]
 
 
-  // Direction: browser/gesture back = pop; tab-root ↔ tab-root = fade; else push.
-  const prevPathRef = useRef(location.pathname)
-  const prevPath = prevPathRef.current
-  let direction = navType === 'POP' ? 'back' : 'push'
-  if (TAB_TITLES[prevPath] && TAB_TITLES[location.pathname]) direction = 'tab'
-  useEffect(() => { prevPathRef.current = location.pathname }, [location.pathname])
+  // Direction is computed ONCE per location change and cached in a ref, so
+  // re-renders during an in-flight animation can never flip the variants
+  // mid-transition (that mid-flight flip was one source of the flashing).
+  // An in-app history stack also detects "back" when it happens via a <Link>
+  // (e.g. a header Back button) — not just browser/gesture POP — so those
+  // play the pop animation instead of a wrong-direction push.
+  const navRef = useRef({ path: location.pathname, direction: 'push', stack: [location.pathname] })
+  if (navRef.current.path !== location.pathname) {
+    const { stack, path: prevPath } = navRef.current
+    let direction
+    if (navMotion.swipeBack) direction = 'swipe'
+    else if (navType === 'POP' || stack[stack.length - 2] === location.pathname) direction = 'back'
+    else direction = 'push'
+    if (TAB_TITLES[prevPath] && TAB_TITLES[location.pathname]) direction = 'tab'
+    navMotion.swipeBack = false
+    let stackNext =
+      direction === 'tab' ? [location.pathname]
+      : direction === 'back' || direction === 'swipe' ? stack.slice(0, -1)
+      : [...stack, location.pathname]
+    if (stackNext[stackNext.length - 1] !== location.pathname) stackNext = [...stackNext, location.pathname]
+    navRef.current = { path: location.pathname, direction, stack: stackNext }
+  }
+  const direction = navRef.current.direction
 
-  // Spring physics for push/back (fluid, native settle); tab roots swap
-  // instantly so the main navigation stays static. Reduce Motion → short fade.
+  // Spring physics for push/back (fluid, native settle); tab roots and
+  // post-gesture swaps are instant. Reduce Motion → short fade.
   const transition =
-    direction === 'tab' ? { duration: 0 }
+    direction === 'tab' || direction === 'swipe' ? { duration: 0 }
     : reduceMotion ? { duration: 0.15 }
     : { type: 'spring', stiffness: 400, damping: 42, mass: 1 }
 
   return (
     <div className="relative flex-1 min-h-0 flex flex-col overflow-hidden">
-    <AnimatePresence mode="popLayout" initial={false} custom={direction}>
+    <AnimatePresence initial={false} custom={direction}>
+      {/* Pages are absolutely stacked (not popLayout) — the exiting page keeps
+          its exact size and position while both are on screen, which removes
+          the layout jump/flash popLayout caused on back navigation. */}
       <motion.div
         key={location.pathname}
         custom={direction}
@@ -68,7 +91,7 @@ export default function AnimatedRoutes() {
         initial="initial"
         animate="animate"
         exit="exit"
-        className="flex-1 min-h-0 flex flex-col bg-background"
+        className="absolute inset-0 flex flex-col overflow-hidden bg-background"
         // PERF: no permanent willChange — a full-page layer kept alive forever
         // costs GPU memory in WKWebView/Android WebView and causes Low Power
         // Mode jank; framer-motion promotes the layer only while animating.
