@@ -18,8 +18,13 @@ Deno.serve(async (req) => {
     // Apple hard-requires form_post when name/email scopes are requested, and a
     // POST body needs a server route — the appleCallback backend function is the
     // registered Return URL. It relays the id_token back via the deeplink.
+    // Functions are also served on the app's own domain at /functions/<name>,
+    // so APP_BASE_URL (your custom domain, no trailing slash) hosts the callback.
     // Must exactly match the return URL registered in the Apple Developer Console.
-    const redirectUri = `https://app.base44.com/api/apps/${Deno.env.get('BASE44_APP_ID')}/functions/appleCallback`;
+    const APP_BASE_URL = Deno.env.get('APP_BASE_URL');
+    const redirectUri = APP_BASE_URL
+      ? `${APP_BASE_URL}/functions/appleCallback`
+      : `https://app.base44.com/api/apps/${Deno.env.get('BASE44_APP_ID')}/functions/appleCallback`;
 
     const url = 'https://appleid.apple.com/auth/authorize?' + new URLSearchParams({
       client_id: clientId,

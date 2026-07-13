@@ -56,16 +56,17 @@ Files involved:
    - **Primary App ID:** the App ID from Step 2.1.
    - **Domains and Subdomains:**
      ```
-     despia-connect-go.base44.app
-     app.base44.com
+     <your-custom-domain>
      ```
    - **Return URLs** (comma-delimited, `https://` required, no wildcards):
      ```
-     https://despia-connect-go.base44.app/,https://app.base44.com/api/apps/6a455bf21d244a918b73cdde/functions/appleCallback
+     https://<your-custom-domain>/,https://<your-custom-domain>/functions/appleCallback
      ```
-     - `…despia-connect-go.base44.app/` → used by the Apple JS SDK popup (iOS + web).
+     - `…/` → used by the Apple JS SDK popup (iOS + web).
      - `…/functions/appleCallback` → used by the Android Chrome Custom Tabs flow
        (Apple `form_post`s the `id_token` there; the function deeplinks it back).
+       The host comes from the `APP_BASE_URL` secret — backend functions are also
+       served on the app's own domain at `/functions/<name>`.
 4. Click **Done → Continue → Save**.
 
 > **Custom domain?** If you publish the app on your own domain later, come back
@@ -84,7 +85,7 @@ calls such as token revocation. Skip it for now.
 | Secret | Value | Required |
 |---|---|---|
 | `APPLE_SERVICES_ID` | The Services ID from Step 2.2 (e.g. `com.yourcompany.yourapp.webauth`) | ✅ Yes |
-| `APP_BASE_URL` | Your app's public URL, e.g. `https://despia-connect-go.base44.app` (no trailing slash) | No longer used by the Apple flow (the Android return URL is the `appleCallback` function) — still used elsewhere (e.g. password-reset links) |
+| `APP_BASE_URL` | Your app's public URL on your custom domain, e.g. `https://yourdomain.com` (no trailing slash) | Yes — the Android return URL is built as `${APP_BASE_URL}/functions/appleCallback` (falls back to the `app.base44.com` function URL if unset) |
 | `JWT_SECRET` | ≥32 random characters — already set for this template's auth | ✅ Yes (already set) |
 
 ---
